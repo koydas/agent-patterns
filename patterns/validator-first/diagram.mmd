@@ -1,0 +1,6 @@
+flowchart TD
+    Issue([Issue / task input]) --> Validator[Validator agent]
+    Validator --> Valid{VALID?}
+    Valid -- yes --> Pipeline[Main pipeline]
+    Pipeline --> Done([Output])
+    Valid -- no --> Block([Block + label needs-refinement])

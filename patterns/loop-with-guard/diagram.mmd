@@ -1,0 +1,8 @@
+flowchart TD
+    Start([Task input]) --> Coder[Coder agent]
+    Coder --> Reviewer[Reviewer agent]
+    Reviewer --> Approved{APPROVED?}
+    Approved -- yes --> Done([Return result])
+    Approved -- no --> CapCheck{Round cap\nreached?}
+    CapCheck -- no --> Coder
+    CapCheck -- yes --> Escalate([Escalate to human gate])
