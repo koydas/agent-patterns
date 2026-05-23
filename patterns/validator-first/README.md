@@ -1,5 +1,14 @@
 # validator-first
 
+```mermaid
+flowchart TD
+    Issue([Issue / task input]) --> Validator[Validator agent]
+    Validator --> Valid{VALID?}
+    Valid -- yes --> Pipeline[Main pipeline]
+    Pipeline --> Done([Output])
+    Valid -- no --> Block([Block + label needs-refinement])
+```
+
 A validation agent runs before the main pipeline is triggered. Issues that don't pass the gate never enter the loop.
 
 ## How it works

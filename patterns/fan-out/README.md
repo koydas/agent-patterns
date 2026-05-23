@@ -1,5 +1,16 @@
 # fan-out
 
+```mermaid
+flowchart TD
+    Task([Task input]) --> W1[Worker agent 1]
+    Task --> W2[Worker agent 2]
+    Task --> W3[Worker agent N]
+    W1 --> Aggregator[Aggregator agent]
+    W2 --> Aggregator
+    W3 --> Aggregator
+    Aggregator --> Done([Merged output])
+```
+
 A task is split into independent subtasks, each handled by a separate agent in parallel. Results are merged by an aggregator agent.
 
 ## How it works

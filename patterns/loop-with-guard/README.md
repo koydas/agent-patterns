@@ -1,5 +1,16 @@
 # loop-with-guard
 
+```mermaid
+flowchart TD
+    Start([Task input]) --> Coder[Coder agent]
+    Coder --> Reviewer[Reviewer agent]
+    Reviewer --> Approved{APPROVED?}
+    Approved -- yes --> Done([Return result])
+    Approved -- no --> CapCheck{Round cap\nreached?}
+    CapCheck -- no --> Coder
+    CapCheck -- yes --> Escalate([Escalate to human gate])
+```
+
 An agent iterates in a loop — coder → reviewer → coder — with an explicit exit condition and a round cap to prevent infinite loops.
 
 ## How it works
