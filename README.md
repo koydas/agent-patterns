@@ -41,6 +41,34 @@ A task is split into independent subtasks, each handled by a separate agent in p
 
 ---
 
+### [router](./patterns/router/)
+A classifier agent analyzes the input and dispatches to the appropriate specialist agent. The routing decision is made once, upfront.
+
+**Use case:** Incoming issue → router → `bug-fix-agent`, `feature-agent`, `refactor-agent`, or `security-agent`.
+
+---
+
+### [critic-pair](./patterns/critic-pair/)
+Two agents play adversarial roles before a result is accepted. The proposer produces a solution; the challenger actively tries to break it; a judge makes the final call.
+
+**Use case:** High-stakes logic (auth, parsing, financial calculations) where a single-pass reviewer misses adversarial edge cases.
+
+---
+
+### [checkpoint-resume](./patterns/checkpoint-resume/)
+The pipeline persists its state after each step. On failure or restart, it resumes from the last saved checkpoint rather than restarting from scratch.
+
+**Use case:** Long pipelines (analyze → plan → implement → test) running in unstable environments — CI runners, rate-limited APIs, serverless.
+
+---
+
+### [speculative-race](./patterns/speculative-race/)
+Multiple agents tackle the same task in parallel with different strategies. All run to completion; a selector agent picks the best result.
+
+**Use case:** Bug with multiple plausible fix strategies (minimal patch vs robust rewrite vs refactor-first) when the best approach is uncertain upfront.
+
+---
+
 ## Structure
 
 ```
