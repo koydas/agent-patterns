@@ -46,8 +46,7 @@ A task is split into independent subtasks, each handled by a separate agent in p
 ```
 patterns/
 └── <pattern-name>/
-    ├── README.md     pattern description, trade-offs, when not to use
-    ├── diagram.mmd   Mermaid diagram (happy path + failure modes)
+    ├── README.md     pattern description, diagram, trade-offs, when not to use
     └── impl.mjs      minimal working implementation (~50-100 lines)
 ```
 
