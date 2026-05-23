@@ -1,5 +1,19 @@
 # sequential-pipeline
 
+```mermaid
+flowchart TD
+    Issue([Issue input]) --> Analyst[ticket-analyst]
+    Analyst --> A_Check{Status?}
+    A_Check -- BLOCKED --> Halt1([Halt])
+    A_Check -- READY --> Builder[code-builder]
+    Builder --> B_Check{Status?}
+    B_Check -- BLOCKED --> Halt2([Halt])
+    B_Check -- READY --> Reviewer[code-reviewer]
+    Reviewer --> R_Check{Status?}
+    R_Check -- CHANGES_REQUESTED --> Halt3([Halt / escalate])
+    R_Check -- APPROVED --> Done([Output ready])
+```
+
 Agents run in a fixed order with structured handoff contracts. Each agent produces a `### Status` / `### Handoff` block consumed by the next.
 
 ## How it works

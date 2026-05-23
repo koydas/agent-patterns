@@ -1,5 +1,17 @@
 # human-gate
 
+```mermaid
+flowchart TD
+    Task([Task input]) --> Pipeline[Autonomous pipeline]
+    Pipeline --> Present[Present output to human]
+    Present --> Gate{Human approves?}
+    Gate -- yes --> Action[Execute irreversible action\ne.g. merge / deploy]
+    Action --> Done([Done])
+    Gate -- no --> Halt([Halt — no action taken])
+    Gate -- timeout/no answer --> Halt
+```
+
+
 A human approval step is placed at the boundary between autonomous execution and irreversible action. The system stops and waits — it does not proceed on timeout.
 
 ## How it works
