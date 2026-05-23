@@ -36,6 +36,11 @@ A human approval step is placed at the boundary between autonomous execution and
 
 ---
 
+### [fan-out](./patterns/fan-out/)
+A task is split into independent subtasks, each handled by a separate agent in parallel. Results are merged by an aggregator agent.
+
+---
+
 ## Structure
 
 ```
