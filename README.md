@@ -44,7 +44,7 @@ A task is split into independent subtasks, each handled by a separate agent in p
 ### [router](./patterns/router/)
 A classifier agent analyzes the input and dispatches to the appropriate specialist agent. The routing decision is made once, upfront.
 
-**Use case:** Issue arrivante → router → `bug-fix-agent`, `feature-agent`, `refactor-agent`, or `security-agent`.
+**Use case:** Incoming issue → router → `bug-fix-agent`, `feature-agent`, `refactor-agent`, or `security-agent`.
 
 ---
 
