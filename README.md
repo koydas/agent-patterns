@@ -46,6 +46,8 @@ A classifier agent analyzes the input and dispatches to the appropriate speciali
 
 **Use case:** Incoming issue → router → `bug-fix-agent`, `feature-agent`, `refactor-agent`, or `security-agent`.
 
+**Implemented in:** [`ai-dev-tools`](https://github.com/koydas/ai-dev-tools) — `issue-router` agent dispatches incoming issues to specialist handlers; `code-builder` variants are selected based on routing output.
+
 ---
 
 ### [critic-pair](./patterns/critic-pair/)
@@ -53,12 +55,16 @@ Two agents play adversarial roles before a result is accepted. The proposer prod
 
 **Use case:** High-stakes logic (auth, parsing, financial calculations) where a single-pass reviewer misses adversarial edge cases.
 
+**Implemented in:** [`ai-dev-tools`](https://github.com/koydas/ai-dev-tools) — `code-challenger` agent, enabled via the `--strict` flag on the review step.
+
 ---
 
 ### [checkpoint-resume](./patterns/checkpoint-resume/)
 The pipeline persists its state after each step. On failure or restart, it resumes from the last saved checkpoint rather than restarting from scratch.
 
 **Use case:** Long pipelines (analyze → plan → implement → test) running in unstable environments — CI runners, rate-limited APIs, serverless.
+
+**Implemented in:** [`ai-dev-tools`](https://github.com/koydas/ai-dev-tools) — `checkpoint.mjs` script + `/resume` command persist and restore pipeline state. Also in [`autonomous-dev-loop`](https://github.com/koydas/autonomous-dev-loop) — pipeline state is persisted via GitHub Actions artifacts across job runs.
 
 ---
 

@@ -1,70 +1,76 @@
-import Anthropic from "@anthropic-ai/sdk";
+// Speculative-race pattern: launch the same task across N strategies in
+// parallel, wait for all to complete, select the best result via a selector.
 
-const client = new Anthropic();
-
-async function runAgent(systemPrompt, userPrompt) {
-  const response = await client.messages.create({
-    model: "claude-sonnet-4-6",
-    max_tokens: 1024,
-    system: systemPrompt,
-    messages: [{ role: "user", content: userPrompt }],
-  });
-  return response.content[0].text;
-}
+// --- Strategies (swap runStrategy for real agent calls with distinct prompts) ---
 
 const STRATEGIES = [
   {
-    name: "minimal-fix",
-    systemPrompt:
-      "You are a conservative engineer. Produce the smallest possible change that solves the problem. No refactoring, no extras — just the fix.",
+    name: 'minimal',
+    description: 'smallest change that solves the problem, no extras',
   },
   {
-    name: "robust-fix",
-    systemPrompt:
-      "You are a thorough engineer. Produce a complete solution with input validation, error handling, and edge case coverage.",
+    name: 'robust',
+    description: 'complete solution with validation, error handling, and edge cases',
   },
   {
-    name: "refactor-fix",
-    systemPrompt:
-      "You are a clean-code engineer. Solve the problem and improve the surrounding code quality at the same time. Readability matters.",
+    name: 'refactor',
+    description: 'solve the problem and improve surrounding code quality',
   },
 ];
 
-async function speculativeRace(task) {
-  console.log(`\nLaunching ${STRATEGIES.length} strategies in parallel...\n`);
+async function runStrategy(strategy, task) {
+  await new Promise(r => setTimeout(r, 40 + Math.random() * 80));
+  return {
+    strategy: strategy.name,
+    approach: strategy.description,
+    output: `[${strategy.name}] Solution to "${task}" — approach: ${strategy.description}`,
+  };
+}
 
-  const results = await Promise.all(
-    STRATEGIES.map(({ name, systemPrompt }) =>
-      runAgent(systemPrompt, `Task: ${task}`).then((output) => {
-        console.log(`[${name}] Done.`);
-        return { name, output };
+// --- Mock selector ---
+
+async function selector(task, candidates) {
+  await new Promise(r => setTimeout(r, 20));
+  // In a real system: an LLM scores each candidate against quality criteria.
+  // Here: deterministic pick of the first candidate (mock — replace with LLM call).
+  void task;
+  return candidates[0];
+}
+
+// --- Orchestrator ---
+
+async function speculativeRace(task) {
+  console.log(`[orchestrator] task: "${task}"`);
+  console.log(`[orchestrator] launching ${STRATEGIES.length} strategies in parallel\n`);
+
+  const t0 = Date.now();
+
+  const candidates = await Promise.all(
+    STRATEGIES.map(strategy =>
+      runStrategy(strategy, task).then(result => {
+        console.log(`  [${result.strategy}] done (${Date.now() - t0}ms)`);
+        return result;
       })
     )
   );
 
-  const candidates = results
-    .map(({ name, output }) => `### ${name}\n${output}`)
-    .join("\n\n");
+  console.log(`\n[selector] evaluating ${candidates.length} candidates...`);
+  const winner = await selector(task, candidates);
+  console.log(`[selector] chose: ${winner.strategy}\n`);
 
-  console.log("\n[selector] Picking the best candidate...");
-  const selection = await runAgent(
-    "You are a senior engineer selecting the best solution from several candidates. On the first line, write exactly the strategy name you choose (e.g. 'minimal-fix'). Then briefly justify the choice in 1–2 sentences.",
-    `Task: ${task}\n\nCandidates:\n${candidates}`
-  );
-
-  const winnerName = selection.split("\n")[0].trim();
-  const winner = results.find(({ name }) => name === winnerName) ?? results[0];
-
-  console.log(`[selector] Chose: ${winner.name}`);
-
-  return { results, selection, winner };
+  return { candidates, winner };
 }
 
-const { winner, selection } = await speculativeRace(
-  "Users are logged out after 5 minutes of inactivity even when they are actively filling a long form"
+// --- Entry point ---
+
+const { candidates, winner } = await speculativeRace(
+  'Users are logged out mid-form after 5 minutes of inactivity'
 );
 
-console.log("\n=== SELECTION RATIONALE ===\n");
-console.log(selection);
-console.log("\n=== WINNING IMPLEMENTATION ===\n");
-console.log(winner.output);
+console.log('=== ALL CANDIDATES ===');
+candidates.forEach(c => console.log(`  [${c.strategy}] ${c.output}`));
+
+console.log('\n=== WINNER ===');
+console.log(`Strategy: ${winner.strategy}`);
+console.log(`Approach: ${winner.approach}`);
+console.log(`Output:   ${winner.output}`);
