@@ -57,6 +57,6 @@ A pipeline observes its own past outputs and modifies its instruction set persis
 
 ## Failure modes
 
-- **Rule proliferation** — every run appends; after N cycles the instruction file is contradictory or too long to load effectively.
-- **Feedback misinterpretation** — learn agent generalises a context-specific correction into a universal rule.
-- **Silent regression** — a learned rule fixes issue A while breaking behaviour B; no reviewer catches it until B resurfaces.
+- **Rule proliferation** — every run appends; after N cycles the instruction file is contradictory or too long to load effectively. Mitigation: pair with a **prune agent** that periodically deduplicates and consolidates the rule set (merge semantically equivalent rules, drop superseded ones, enforce a line-count budget). This is a natural `/prune` command complement to `/learn`.
+- **Feedback misinterpretation** — learn agent generalises a context-specific correction into a universal rule. Mitigation: scope rules to a section header (e.g. `## Rules — PR reviews`) so they can be audited and pruned by domain.
+- **Silent regression** — a learned rule fixes issue A while breaking behaviour B; no reviewer catches it until B resurfaces. Mitigation: treat `CLAUDE.md` as a versioned file and review its diff on every `/learn` run before committing.
