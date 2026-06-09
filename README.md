@@ -75,6 +75,13 @@ Multiple agents tackle the same task in parallel with different strategies. All 
 
 ---
 
+### [reflexive-loop](./patterns/reflexive-loop/)
+A pipeline captures human feedback, extracts rules via a learn agent, and persists them into its own instruction set. Each subsequent run loads the enriched instructions without human re-intervention.
+
+**Implemented in:** [`ai-dev-tools`](https://github.com/koydas/ai-dev-tools) — `/learn` command + hierarchical `CLAUDE.md` as persistence vector. Also in [`autonomous-dev-loop`](https://github.com/koydas/autonomous-dev-loop) — `REQUEST_CHANGES → fix` cycles as capturable feedback signals injected into `prompts/*.md`.
+
+---
+
 ## Structure
 
 ```
