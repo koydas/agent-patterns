@@ -13,10 +13,11 @@ async function runAgent(systemPrompt, userPrompt) {
   return response.content[0].text;
 }
 
-// Strict: the whole response must be a JSON object with a known verdict.
-// Anything else (prose, markdown fences, missing fields) is a parse failure.
+// Strict: the response must be a JSON object with a known verdict. The only
+// leniency is one surrounding ```json fence; prose or missing fields still fail.
 function parseReview(text) {
-  const parsed = JSON.parse(text.trim());
+  const unfenced = text.trim().replace(/^```(?:json)?\s*\n([\s\S]*)\n```$/, "$1");
+  const parsed = JSON.parse(unfenced);
   if (parsed.verdict !== "APPROVED" && parsed.verdict !== "CHANGES_REQUESTED") {
     throw new Error(`unknown verdict: ${JSON.stringify(parsed.verdict)}`);
   }
@@ -49,9 +50,10 @@ async function loopWithGuard(task) {
     try {
       review = parseReview(raw);
     } catch (err) {
-      // Fail closed: an unparseable review never approves.
+      // Fail closed: an unparseable review never approves. Keep the previous
+      // feedback so the coder isn't steered by a parse error it can't act on.
       console.log(`[reviewer] unparseable output (${err.message}) — treating as CHANGES_REQUESTED`);
-      review = { verdict: "CHANGES_REQUESTED", reasons: [`Reviewer output was not valid verdict JSON: ${err.message}`] };
+      continue;
     }
     console.log(`[reviewer] ${review.verdict}: ${review.reasons.join("; ").slice(0, 120)}`);
 

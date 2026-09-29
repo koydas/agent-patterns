@@ -17,7 +17,7 @@ An agent iterates in a loop — coder → reviewer → coder — with an explici
 
 1. The **coder** agent produces or improves a solution.
 2. The **reviewer** agent receives the original task and the code, and returns JSON: `{"verdict": "APPROVED" | "CHANGES_REQUESTED", "reasons": string[]}`.
-3. The verdict is parsed strictly. Output that is not exactly that shape (prose, markdown fences, unknown verdict) is treated as `CHANGES_REQUESTED` and the parse error is logged — the loop fails closed, never open.
+3. The verdict is parsed strictly; the only leniency is stripping one surrounding ` ```json ` fence. Anything else (prose, unknown verdict, missing fields) is treated as `CHANGES_REQUESTED`: the parse error is logged, the round is spent, and the previous feedback is kept — the loop fails closed, never open.
 4. If approved, the loop exits cleanly. Otherwise `reasons` become the coder's feedback for the next round.
 5. If the round cap is reached without approval, the task escalates to a human gate.
 
@@ -45,5 +45,5 @@ An agent iterates in a loop — coder → reviewer → coder — with an explici
 - **Never-converging loop** — reviewer criteria conflict with coder capabilities; always hits the cap.
 - **Brittle verdict parsing** — matching a text prefix (`startsWith("APPROVED")`) misses `**APPROVED**` or leading whitespace, so the loop never exits and burns every round. Use a structured verdict and parse it strictly.
 - **Reviewer without the spec** — a reviewer that sees only the code judges style, not whether the task is solved. Always pass the task.
-- **Persistent parse failures** — a model that keeps wrapping JSON in fences will hit the cap via the fail-closed path. Watch the logged parse errors; if they recur, use the API's structured-output mode instead of prompt-only JSON.
+- **Persistent parse failures** — a reviewer that keeps emitting prose instead of JSON will hit the cap via the fail-closed path. Watch the logged parse errors; if they recur, use the API's structured-output mode instead of prompt-only JSON.
 - **False approval** — reviewer approves suboptimal output to exit the loop (prompt leakage of the exit condition).
