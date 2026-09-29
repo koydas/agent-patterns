@@ -25,7 +25,8 @@ An agent iterates in a loop — coder → reviewer → coder — with an explici
 4. An invalid verdict is the reviewer's fault, so it is repaired on the reviewer side: the parse error is sent back once, without spending a coder round. If the repair also fails, the loop fails closed and escalates — a reviewer that cannot produce a verdict is a system fault, not a code fault.
 5. If approved, the loop exits cleanly. Otherwise `reasons` become the coder's feedback for the next round.
 6. If the round cap is reached without approval, the task escalates to a human gate with the last reasons, not just the rejected code.
-7. Truncated output (`stop_reason: "max_tokens"`) throws: truncated code is not reviewable, and a truncated verdict is not a verdict.
+7. A refusal, truncated output (`stop_reason: "max_tokens"`) or an empty answer throws: none of them is reviewable code or a verdict.
+8. The repair turn appends the reviewer's full previous turn, thinking blocks unchanged — the history stays append-only, which models with preserved thinking require.
 
 ## When to use
 

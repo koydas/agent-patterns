@@ -5,19 +5,24 @@ const MAX_ROUNDS = 5;
 const MAX_REVIEW_ATTEMPTS = 2; // first try + one repair turn
 
 async function runAgent(systemPrompt, messages) {
-  const response = await client.messages.create({
-    model: "claude-sonnet-4-6",
-    max_tokens: 4096,
+  const response = await client.beta.messages.create({
+    model: "claude-opus-5-5",
+    max_tokens: 16000, // thinking counts toward it — leave room for thinking + reply
+    output_config: { effort: "medium" }, // set explicitly: defaults change between models
+    betas: ["server-side-fallback-2026-07-01"],
+    fallbacks: "default", // a safety-classifier refusal is retried on a recommended model
     system: systemPrompt,
     messages,
   });
-  // Truncated output is not a verdict and not reviewable code — fail loudly.
+  // A refusal, a truncation or an empty answer is not a verdict and not reviewable code — fail loudly.
+  if (response.stop_reason === "refusal") throw new Error("request refused by safety classifier");
   if (response.stop_reason === "max_tokens") {
     throw new Error("output truncated at max_tokens — raise the limit or narrow the task");
   }
-  const block = response.content.find((b) => b.type === "text");
-  if (!block) throw new Error(`no text in response (stop_reason: ${response.stop_reason})`);
-  return block.text;
+  // Opus 5.5 always thinks, so the text block isn't necessarily content[0].
+  const text = response.content.find((b) => b.type === "text")?.text;
+  if (!text) throw new Error(`no text in response (stop_reason: ${response.stop_reason})`);
+  return { text, content: response.content };
 }
 
 // The coder may wrap code in prose; keep only the first fenced block if there is one.
@@ -58,13 +63,14 @@ const REVIEWER_SYSTEM =
 async function review(task, code) {
   const messages = [{ role: "user", content: `<task>\n${task}\n</task>\n\n<code>\n${code}\n</code>` }];
   for (let attempt = 1; attempt <= MAX_REVIEW_ATTEMPTS; attempt++) {
-    const raw = await runAgent(REVIEWER_SYSTEM, messages);
+    const { text: raw, content } = await runAgent(REVIEWER_SYSTEM, messages);
     try {
       return parseReview(raw);
     } catch (err) {
       console.log(`[reviewer] invalid verdict, attempt ${attempt}/${MAX_REVIEW_ATTEMPTS}: ${err.message}`);
       messages.push(
-        { role: "assistant", content: raw || "(empty)" }, // the API rejects empty turns
+        // Append the full turn, thinking blocks unchanged: history is append-only.
+        { role: "assistant", content },
         { role: "user", content: `That is not a valid verdict (${err.message}). Respond with only the JSON object.` }
       );
     }
@@ -80,7 +86,7 @@ async function loopWithGuard(task) {
   for (let round = 1; round <= MAX_ROUNDS; round++) {
     console.log(`\n--- Round ${round}/${MAX_ROUNDS} ---`);
 
-    const coderOutput = await runAgent(
+    const { text: coderOutput } = await runAgent(
       "You are a coding agent. Write or improve code based on the task and any reviewer feedback. " +
         "Return the complete code in a single fenced code block.",
       [{ role: "user", content: `Task: ${task}\n\nPrevious code:\n${code}\n\nReviewer feedback:\n${feedback}` }]
