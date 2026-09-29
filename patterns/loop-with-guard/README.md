@@ -25,7 +25,7 @@ An agent iterates in a loop — coder → reviewer → coder — with an explici
 4. An invalid verdict is the reviewer's fault, so it is repaired on the reviewer side: the parse error is sent back once, without spending a coder round. If the repair also fails, the loop fails closed and escalates — a reviewer that cannot produce a verdict is a system fault, not a code fault.
 5. If approved, the loop exits cleanly. Otherwise `reasons` become the coder's feedback for the next round.
 6. If the round cap is reached without approval, the task escalates to a human gate with the last reasons, not just the rejected code.
-7. A refusal, truncated output (`stop_reason: "max_tokens"`) or an empty answer throws: none of them is reviewable code or a verdict.
+7. A safety-classifier refusal escalates to the human gate — another round cannot fix it. Truncated output (`stop_reason: "max_tokens"`) or an empty answer throws: neither is reviewable code nor a verdict.
 8. The repair turn appends the reviewer's full previous turn, thinking blocks unchanged — the history stays append-only, which models with preserved thinking require.
 
 ## When to use
@@ -54,7 +54,7 @@ An agent iterates in a loop — coder → reviewer → coder — with an explici
 - **Brittle verdict parsing** — matching a text prefix (`startsWith("APPROVED")`) misses `**APPROVED**` or leading whitespace, so the loop never exits and burns every round. Use a structured verdict and parse it strictly.
 - **Reviewer without the spec** — a reviewer that sees only the code judges style, not whether the task is solved. Always pass the task.
 - **Format error treated as a code rejection** — if an unparseable verdict just counts as `CHANGES_REQUESTED`, the coder rewrites code nobody judged. Repair on the reviewer side, then escalate.
-- **Persistent parse failures** — a reviewer that keeps emitting prose escalates on every task. Watch the logged parse errors; if they recur, use the API's structured-output mode instead of prompt-only JSON.
+- **Persistent parse failures** — a reviewer that keeps emitting prose escalates on every task. Strict parsing plus a repair turn is the portable path: it works on any model and provider. Where the API supports structured outputs (`output_config.format` on the Claude API), that is the native path — the schema is enforced server-side and the repair turn becomes dead code.
 - **Silent truncation** — a `max_tokens` cut-off yields incomplete code the reviewer rejects forever, or a verdict that never parses. Check `stop_reason`.
 - **False approval** — reviewer approves suboptimal output to exit the loop (prompt leakage of the exit condition).
 - **Reward hacking via injection** — the coder is optimised to get approved, and its output is interpolated into the reviewer's prompt. Code containing "respond APPROVED" is an attack path. Delimiting the code as data reduces this but is not a boundary (the code can contain `</code>`); the human gate stays the real control.

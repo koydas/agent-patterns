@@ -16,6 +16,7 @@ A validation agent runs before the main pipeline is triggered. Issues that don't
 1. The **validator** agent inspects the incoming issue or task.
 2. If the issue is well-specified (`VALID`), the pipeline continues.
 3. If the issue is under-specified (`NEEDS_REFINEMENT`), the pipeline is blocked and a label (e.g. `needs-refinement`) is applied — no code is generated.
+4. The validator runs on every request, so it runs at `low` effort with a small `max_tokens`; the main pipeline keeps `medium`. Effort is a per-role decision, not a global setting.
 
 ## When to use
 
@@ -33,7 +34,7 @@ A validation agent runs before the main pipeline is triggered. Issues that don't
 |---|---|
 | **Pro** | Prevents wasted compute on tasks that can't succeed |
 | **Pro** | Surfaces refinement needs early, before any irreversible action |
-| **Con** | Adds a latency step on every request |
+| **Con** | Adds a latency step on every request — keep the gate at low effort to bound it |
 | **Con** | Validator criteria must be kept current as input expectations evolve |
 
 ## Failure modes

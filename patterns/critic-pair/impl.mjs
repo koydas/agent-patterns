@@ -2,23 +2,18 @@ import Anthropic from "@anthropic-ai/sdk";
 
 const client = new Anthropic();
 
-// Opus 5.5 always thinks, so the text block isn't necessarily content[0].
-// Check stop_reason first: a refusal or a truncation is not an answer.
+// Opus 5.5 always thinks, so find the text block by type. Anything but end_turn
+// (refusal, max_tokens) is not a usable answer.
 function readText(response) {
-  if (response.stop_reason === "refusal") throw new Error("request refused by safety classifier");
-  if (response.stop_reason === "max_tokens") throw new Error("output truncated at max_tokens");
-  const block = response.content.find((b) => b.type === "text");
-  if (!block) throw new Error(`no text in response (stop_reason: ${response.stop_reason})`);
-  return block.text;
+  if (response.stop_reason !== "end_turn") throw new Error(`no usable answer (stop_reason: ${response.stop_reason})`);
+  return response.content.find((b) => b.type === "text")?.text ?? "";
 }
 
 async function runAgent(systemPrompt, userPrompt) {
-  const response = await client.beta.messages.create({
+  const response = await client.messages.create({
     model: "claude-opus-5-5",
-    max_tokens: 16000, // thinking counts toward it — leave room for thinking + reply
-    output_config: { effort: "medium" }, // set explicitly: defaults change between models
-    betas: ["server-side-fallback-2026-07-01"],
-    fallbacks: "default", // a safety-classifier refusal is retried on a recommended model
+    max_tokens: 16000, // thinking counts toward it
+    output_config: { effort: "medium" }, // explicit: defaults differ between models
     system: systemPrompt,
     messages: [{ role: "user", content: userPrompt }],
   });

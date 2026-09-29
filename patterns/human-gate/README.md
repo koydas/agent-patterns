@@ -21,6 +21,7 @@ A human approval step is placed at the boundary between autonomous execution and
 3. The human explicitly approves (`yes`) or rejects (`no`).
 4. Only on explicit approval does the system execute the irreversible action (merge, deploy, send, etc.).
 5. On rejection — or if no answer is given — the pipeline halts. Nothing is committed.
+6. If the pipeline's own model call is refused by a safety classifier, it ends at the gate the same way: halted, reported, no action.
 
 ## When to use
 

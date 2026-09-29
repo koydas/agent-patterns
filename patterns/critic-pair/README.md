@@ -35,6 +35,7 @@ Two agents play adversarial roles before a result is accepted. The proposer prod
 | **Pro** | Surfaces flaws that a non-adversarial reviewer skips |
 | **Pro** | Produces a structured critique even when rejected — useful as input to a fix loop |
 | **Con** | Three sequential agent calls; 3× latency and cost of a single-agent review |
+| **Con** | All three roles run on the same model here: blind spots are correlated, and the challenger misses what the proposer missed. A different model or a stronger effort for the challenger buys real diversity, at a cost |
 | **Con** | Challenger can hallucinate flaws that don't exist, causing false rejections |
 
 ## Failure modes

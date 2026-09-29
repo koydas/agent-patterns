@@ -22,6 +22,8 @@ Agents run in a fixed order with structured handoff contracts. Each agent produc
 2. The **code-builder** implements the plan.
 3. The **code-reviewer** reviews the output and returns a verdict.
 
+A model refusal at any stage is mapped onto the same contract: the stage returns `### Status BLOCKED` with the reason in `### Handoff`, and the pipeline halts at that stage instead of crashing.
+
 Each stage reads only the `### Handoff` block from the previous stage — not the full output. If any stage emits `### Status: BLOCKED`, the pipeline halts.
 
 ## When to use
