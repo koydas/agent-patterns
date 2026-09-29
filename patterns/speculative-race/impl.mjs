@@ -1,5 +1,5 @@
 // Speculative-race pattern: launch the same task across N strategies in
-// parallel, wait for all to complete, select the best result via a selector.
+// parallel, wait for all to settle, select the best successful result via a selector.
 
 // --- Strategies (swap runStrategy for real agent calls with distinct prompts) ---
 
@@ -45,7 +45,8 @@ async function speculativeRace(task) {
 
   const t0 = Date.now();
 
-  const candidates = await Promise.all(
+  // allSettled, not all: one failing strategy must not discard the others.
+  const settled = await Promise.allSettled(
     STRATEGIES.map(strategy =>
       runStrategy(strategy, task).then(result => {
         console.log(`  [${result.strategy}] done (${Date.now() - t0}ms)`);
@@ -53,6 +54,17 @@ async function speculativeRace(task) {
       })
     )
   );
+
+  settled.forEach((s, i) => {
+    if (s.status === 'rejected') {
+      console.log(`  [${STRATEGIES[i].name}] failed: ${s.reason?.message ?? s.reason}`);
+    }
+  });
+
+  const candidates = settled.filter(s => s.status === 'fulfilled').map(s => s.value);
+  if (candidates.length === 0) {
+    throw new Error('All strategies failed — nothing to select from');
+  }
 
   console.log(`\n[selector] evaluating ${candidates.length} candidates...`);
   const winner = await selector(task, candidates);

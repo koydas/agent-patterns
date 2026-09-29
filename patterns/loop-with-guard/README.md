@@ -4,7 +4,7 @@
 flowchart TD
     Start([Task input]) --> Coder[Coder agent]
     Coder --> Reviewer[Reviewer agent]
-    Reviewer --> Approved{APPROVED?}
+    Reviewer --> Approved{verdict ==\nAPPROVED?}
     Approved -- yes --> Done([Return result])
     Approved -- no --> CapCheck{Round cap\nreached?}
     CapCheck -- no --> Coder
@@ -16,9 +16,10 @@ An agent iterates in a loop — coder → reviewer → coder — with an explici
 ## How it works
 
 1. The **coder** agent produces or improves a solution.
-2. The **reviewer** agent evaluates it and responds with `APPROVED` or `CHANGES_REQUESTED`.
-3. If approved, the loop exits cleanly.
-4. If the round cap is reached without approval, the task escalates to a human gate.
+2. The **reviewer** agent receives the original task and the code, and returns JSON: `{"verdict": "APPROVED" | "CHANGES_REQUESTED", "reasons": string[]}`.
+3. The verdict is parsed strictly. Output that is not exactly that shape (prose, markdown fences, unknown verdict) is treated as `CHANGES_REQUESTED` and the parse error is logged — the loop fails closed, never open.
+4. If approved, the loop exits cleanly. Otherwise `reasons` become the coder's feedback for the next round.
+5. If the round cap is reached without approval, the task escalates to a human gate.
 
 ## When to use
 
@@ -42,4 +43,7 @@ An agent iterates in a loop — coder → reviewer → coder — with an explici
 ## Failure modes
 
 - **Never-converging loop** — reviewer criteria conflict with coder capabilities; always hits the cap.
+- **Brittle verdict parsing** — matching a text prefix (`startsWith("APPROVED")`) misses `**APPROVED**` or leading whitespace, so the loop never exits and burns every round. Use a structured verdict and parse it strictly.
+- **Reviewer without the spec** — a reviewer that sees only the code judges style, not whether the task is solved. Always pass the task.
+- **Persistent parse failures** — a model that keeps wrapping JSON in fences will hit the cap via the fail-closed path. Watch the logged parse errors; if they recur, use the API's structured-output mode instead of prompt-only JSON.
 - **False approval** — reviewer approves suboptimal output to exit the loop (prompt leakage of the exit condition).

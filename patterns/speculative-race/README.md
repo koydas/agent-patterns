@@ -9,13 +9,23 @@ flowchart TD
     Selector --> Done([Best result])
 ```
 
-Multiple agents tackle the same task in parallel with different strategies. All run to completion; a selector agent picks the best result. Losers are discarded.
+Multiple agents tackle the same task in parallel with different strategies. All run until they settle (succeed or fail); a selector agent picks the best successful result. Losers and failures are discarded.
 
 ## How it works
 
 1. N **strategy agents** receive the same task and run in parallel, each with a different system prompt (e.g. minimal fix, robust fix, refactor-first fix).
-2. All results are collected.
+2. Results are collected with `Promise.allSettled`. Rejected strategies are logged and filtered out; if every strategy fails, the orchestrator throws.
 3. A **selector agent** receives all candidates and picks the best one, with a justification.
+
+## `allSettled` vs `all` vs `any`
+
+| Combinator | Semantics | Fit |
+|---|---|---|
+| `Promise.all` | Waits for all, **rejects on the first failure** — surviving results are lost | Wrong here: one flaky strategy kills the whole run |
+| `Promise.allSettled` | Waits for all, reports each outcome | **Run all, select best** — this pattern |
+| `Promise.any` | Resolves with the **first success**; rejects with `AggregateError` only if all fail | True race: first acceptable answer wins |
+
+Use `Promise.any` instead when candidates are interchangeable and any success is good enough — there is no quality ranking, so there is nothing for a selector to do, and latency is the goal (e.g. the same request against redundant providers, or strategies that each end in a pass/fail check such as "tests pass"). Note that `Promise.any` does not stop the losers: pass an `AbortSignal` to each strategy and abort after the winner resolves, otherwise you still pay N × cost.
 
 ## When to use
 

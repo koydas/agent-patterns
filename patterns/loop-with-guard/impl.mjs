@@ -13,6 +13,19 @@ async function runAgent(systemPrompt, userPrompt) {
   return response.content[0].text;
 }
 
+// Strict: the whole response must be a JSON object with a known verdict.
+// Anything else (prose, markdown fences, missing fields) is a parse failure.
+function parseReview(text) {
+  const parsed = JSON.parse(text.trim());
+  if (parsed.verdict !== "APPROVED" && parsed.verdict !== "CHANGES_REQUESTED") {
+    throw new Error(`unknown verdict: ${JSON.stringify(parsed.verdict)}`);
+  }
+  if (!Array.isArray(parsed.reasons) || !parsed.reasons.every((r) => typeof r === "string")) {
+    throw new Error("reasons must be an array of strings");
+  }
+  return parsed;
+}
+
 async function loopWithGuard(task) {
   let code = "";
   let feedback = "";
@@ -26,18 +39,28 @@ async function loopWithGuard(task) {
     );
     console.log("[coder]", code.slice(0, 120).replace(/\n/g, " ") + "...");
 
-    const review = await runAgent(
-      "You are a code reviewer. Start your response with exactly APPROVED or CHANGES_REQUESTED, then explain.",
-      `Review this code:\n\n${code}`
+    const raw = await runAgent(
+      "You are a code reviewer. Check the code against the task. Respond with only a JSON object, " +
+        'no markdown fences: {"verdict": "APPROVED" | "CHANGES_REQUESTED", "reasons": string[]}',
+      `Task: ${task}\n\nReview this code:\n\n${code}`
     );
-    console.log("[reviewer]", review.slice(0, 120).replace(/\n/g, " ") + "...");
 
-    if (review.startsWith("APPROVED")) {
+    let review;
+    try {
+      review = parseReview(raw);
+    } catch (err) {
+      // Fail closed: an unparseable review never approves.
+      console.log(`[reviewer] unparseable output (${err.message}) — treating as CHANGES_REQUESTED`);
+      review = { verdict: "CHANGES_REQUESTED", reasons: [`Reviewer output was not valid verdict JSON: ${err.message}`] };
+    }
+    console.log(`[reviewer] ${review.verdict}: ${review.reasons.join("; ").slice(0, 120)}`);
+
+    if (review.verdict === "APPROVED") {
       console.log(`\n✓ Approved after ${round} round(s).`);
       return { code, rounds: round, escalated: false };
     }
 
-    feedback = review;
+    feedback = review.reasons.map((r) => `- ${r}`).join("\n");
   }
 
   console.log(`\n⚠ Round cap reached (${MAX_ROUNDS}) — escalating to human gate.`);
