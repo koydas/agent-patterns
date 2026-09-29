@@ -1,6 +1,12 @@
 // Speculative-race pattern: launch the same task across N strategies in
 // parallel, wait for all to settle, select the best successful result via a selector.
 
+const STRATEGY_TIMEOUT_MS = 2_000;
+
+// Exercise the failure paths: FAIL_STRATEGY=robust or HANG_STRATEGY=refactor
+const FAIL_STRATEGY = process.env.FAIL_STRATEGY;
+const HANG_STRATEGY = process.env.HANG_STRATEGY;
+
 // --- Strategies (swap runStrategy for real agent calls with distinct prompts) ---
 
 const STRATEGIES = [
@@ -18,8 +24,22 @@ const STRATEGIES = [
   },
 ];
 
-async function runStrategy(strategy, task) {
-  await new Promise(r => setTimeout(r, 40 + Math.random() * 80));
+// Abortable delay standing in for an agent call. A real call must forward the
+// signal too, e.g. client.messages.create(params, { signal }).
+function sleep(ms, signal) {
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(resolve, ms);
+    signal.addEventListener('abort', () => {
+      clearTimeout(timer);
+      reject(signal.reason);
+    }, { once: true });
+  });
+}
+
+async function runStrategy(strategy, task, signal) {
+  if (strategy.name === FAIL_STRATEGY) throw new Error('simulated failure');
+  const ms = strategy.name === HANG_STRATEGY ? 2 ** 31 - 1 : 40 + Math.random() * 80;
+  await sleep(ms, signal);
   return {
     strategy: strategy.name,
     approach: strategy.description,
@@ -46,9 +66,10 @@ async function speculativeRace(task) {
   const t0 = Date.now();
 
   // allSettled, not all: one failing strategy must not discard the others.
+  // The per-strategy deadline stops one hanging strategy from blocking them all.
   const settled = await Promise.allSettled(
     STRATEGIES.map(strategy =>
-      runStrategy(strategy, task).then(result => {
+      runStrategy(strategy, task, AbortSignal.timeout(STRATEGY_TIMEOUT_MS)).then(result => {
         console.log(`  [${result.strategy}] done (${Date.now() - t0}ms)`);
         return result;
       })
@@ -64,6 +85,9 @@ async function speculativeRace(task) {
   const candidates = settled.filter(s => s.status === 'fulfilled').map(s => s.value);
   if (candidates.length === 0) {
     throw new Error('All strategies failed — nothing to select from');
+  }
+  if (candidates.length < STRATEGIES.length) {
+    console.log(`  degraded: ${candidates.length}/${STRATEGIES.length} strategies succeeded`);
   }
 
   console.log(`\n[selector] evaluating ${candidates.length} candidates...`);
