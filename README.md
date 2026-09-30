@@ -103,6 +103,8 @@ patterns/
     └── impl.mjs      minimal working implementation (~50-100 lines)
 ```
 
+The line budget is a target, not a cap. Where the guards *are* the pattern, the implementation keeps them rather than hiding them: `loop-with-guard` (~130 lines: strict verdict parsing, reviewer-side repair, three escalation paths) and `speculative-race` (~110 lines: per-strategy deadlines and failure filtering) run longer on purpose.
+
 ---
 
 ## Related
