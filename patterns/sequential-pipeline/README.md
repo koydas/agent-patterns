@@ -26,6 +26,10 @@ A model refusal at any stage is mapped onto the same contract: the stage returns
 
 Each stage reads only the `### Handoff` block from the previous stage — not the full output. If any stage emits `### Status: BLOCKED`, the pipeline halts.
 
+## Where it came from
+
+- In `ai-dev-tools`, each agent's free-form output became the next agent's input, so the orchestrating command had to interpret prose: fragile, model-dependent, and failing silently. The `### Status / ### Handoff` contract was introduced to make the chain machine-checkable. → [ADR-003](https://github.com/koydas/ai-dev-tools/blob/main/docs/adr/ADR-003-structured-agent-output-contract.md)
+
 ## When to use
 
 - Tasks with well-defined, sequential stages where each stage's output is the next stage's input.

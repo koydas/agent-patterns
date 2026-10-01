@@ -1,93 +1,78 @@
 # agent-patterns
 
-Patterns for multi-agent systems — named, documented, implemented.
+**15 patterns for multi-agent systems — each with a diagram, trade-offs, failure modes, when *not* to use it, and a runnable `impl.mjs`.**
 
-Each pattern emerged from a real pipeline. The goal is not a framework: it's a reference for decisions that recur when building agentic workflows.
+Not a framework. Every pattern here was named after the problem it solved in a pipeline that runs: 12 of 15 are used in two public repos, [`autonomous-dev-loop`](https://github.com/koydas/autonomous-dev-loop) (GitHub Actions, headless) and [`ai-dev-tools`](https://github.com/koydas/ai-dev-tools) (Claude Code, interactive), and every row names where. The other 3 are marked as reference implementations. 9 patterns also have a **Where it came from** section linking the incident or ADR that forced them — for example, `loop-with-guard` exists because an auto-fix agent replaced a 26-test suite with an 18-line stub.
 
----
+Try one without an API key: `node --test patterns/tool-grounded-review/impl.test.mjs` (11 tests), or see [Run one](#run-one).
 
-## Patterns
+How four of them compose in `autonomous-dev-loop`:
 
-### [loop-with-guard](./patterns/loop-with-guard/)
-An agent iterates in a loop — coder → reviewer → coder — with an explicit exit condition and a round cap to prevent infinite loops.
+```mermaid
+flowchart LR
+    I([Issue]) --> V["validator-first<br/>under-specified issues stop here"]
+    V -->|"label: ready-for-dev"| G[Code generation]
+    G --> E["tool-grounded-review<br/>failing check forces REQUEST_CHANGES"]
+    E -->|changes requested| F["loop-with-guard<br/>auto-fix, max 3 attempts"]
+    F --> E
+    E -->|approved| H(["human-gate<br/>a person merges"])
+    F -->|attempts exhausted| H
+```
 
-**Implemented in:** [`autonomous-dev-loop`](https://github.com/koydas/autonomous-dev-loop) — the reviewer either approves or requests changes; the coder retries up to N rounds before escalating to the human gate.
+Labels carry the state between those workflows: that's [label-driven-state-machine](./patterns/label-driven-state-machine/).
 
----
+## Find a pattern by the problem you have
 
-### [validator-first](./patterns/validator-first/)
-A validation agent runs before the main pipeline is triggered. Issues that don't pass the gate never enter the loop.
+### Flow control
 
-**Implemented in:** [`autonomous-dev-loop`](https://github.com/koydas/autonomous-dev-loop) — the Issue Validation Agent blocks under-specified issues with a `needs-refinement` label before any code is generated.
+| Your problem | Pattern | Running in |
+|---|---|---|
+| Agents hand each other prose instead of contracts; a failure mid-chain goes unnoticed | [sequential-pipeline](./patterns/sequential-pipeline/) | [`ai-dev-tools`](https://github.com/koydas/ai-dev-tools) — `ticket-analyst → code-builder → code-reviewer` |
+| One generalist prompt handles bug fixes, features and refactors equally badly | [router](./patterns/router/) | [`ai-dev-tools`](https://github.com/koydas/ai-dev-tools) — `issue-router` agent |
+| Pipeline state across async workflows is invisible and hard to pass along | [label-driven-state-machine](./patterns/label-driven-state-machine/) | [`autonomous-dev-loop`](https://github.com/koydas/autonomous-dev-loop) — four workflows chained by labels, retries by label re-pulse |
+| Independent subtasks run one after another | [fan-out](./patterns/fan-out/) | Reference only (mocked workers) |
+| The best fix strategy is unknown upfront | [speculative-race](./patterns/speculative-race/) | Reference only (mocked selector) |
 
----
+### Quality gates
 
-### [sequential-pipeline](./patterns/sequential-pipeline/)
-Agents run in a fixed order with structured handoff contracts. Each agent produces a `### Status / ### Handoff` block consumed by the next.
+| Your problem | Pattern | Running in |
+|---|---|---|
+| Vague issues burn tokens and come back as garbage PRs | [validator-first](./patterns/validator-first/) | [`autonomous-dev-loop`](https://github.com/koydas/autonomous-dev-loop) — `needs-refinement` blocks generation |
+| The coder ↔ reviewer loop never ends, or ends on a malformed verdict | [loop-with-guard](./patterns/loop-with-guard/) | [`autonomous-dev-loop`](https://github.com/koydas/autonomous-dev-loop) — 3-attempt cap, then escalation |
+| The LLM reviewer approves a PR whose tests are red | [tool-grounded-review](./patterns/tool-grounded-review/) | [`autonomous-dev-loop`](https://github.com/koydas/autonomous-dev-loop) — secret-free evidence job forces `REQUEST_CHANGES` ([ADR-0024](https://github.com/koydas/autonomous-dev-loop/blob/main/docs/adr/0024-tool-evidence-for-pr-review.md)); [`ai-dev-tools`](https://github.com/koydas/ai-dev-tools) — evidence-table gate |
+| A single-pass reviewer misses adversarial edge cases | [critic-pair](./patterns/critic-pair/) | [`ai-dev-tools`](https://github.com/koydas/ai-dev-tools) — `code-challenger`, `--strict` |
+| Nobody can tell whether every acceptance criterion was implemented | [ac-traceability](./patterns/ac-traceability/) | [`ai-dev-tools`](https://github.com/koydas/ai-dev-tools) — AC coverage block + `/ac-check` |
+| A "bug fix" ships with no proof it ever reproduced the bug | [typed-evidence-chain](./patterns/typed-evidence-chain/) | [`ai-dev-tools`](https://github.com/koydas/ai-dev-tools) — bug / refactor / feature builders with typed evidence |
+| An agent merges or deploys on its own | [human-gate](./patterns/human-gate/) | [`autonomous-dev-loop`](https://github.com/koydas/autonomous-dev-loop), [`ai-dev-tools`](https://github.com/koydas/ai-dev-tools) — merge is always human |
 
-**Implemented in:** [`ai-dev-tools`](https://github.com/koydas/ai-dev-tools) — `ticket-analyst → code-builder → code-reviewer` via `/issue-code-generation`.
+### Reliability and cost
 
----
+| Your problem | Pattern | Running in |
+|---|---|---|
+| A rate limit at step 4 restarts the whole pipeline | [checkpoint-resume](./patterns/checkpoint-resume/) | [`autonomous-dev-loop`](https://github.com/koydas/autonomous-dev-loop) — checkpoints as Actions artifacts; [`ai-dev-tools`](https://github.com/koydas/ai-dev-tools) — `checkpoint.mjs` + `/resume` |
+| The invariant system prompt is re-billed on every call; changing a guardrail needs a code change | [staged-prompt-separation](./patterns/staged-prompt-separation/) | [`autonomous-dev-loop`](https://github.com/koydas/autonomous-dev-loop) — `*-system.md` / `*-user.md` pairs, prompt caching on the Anthropic provider path |
+| The same review nit comes back on every PR | [reflexive-loop](./patterns/reflexive-loop/) | Reference only — injection points exist, no automated learn step yet |
 
-### [human-gate](./patterns/human-gate/)
-A human approval step is placed at the boundary between autonomous execution and irreversible action. The system stops and waits — it does not proceed on timeout.
+## Run one
 
-**Implemented in:** [`autonomous-dev-loop`](https://github.com/koydas/autonomous-dev-loop) and [`ai-dev-tools`](https://github.com/koydas/ai-dev-tools) — the merge step is always human-controlled, regardless of reviewer verdict.
+Three patterns run offline, no API key:
 
----
+```bash
+git clone https://github.com/koydas/agent-patterns && cd agent-patterns
+node patterns/label-driven-state-machine/impl.mjs   # simulated GitHub label events
+node patterns/fan-out/impl.mjs
+node patterns/speculative-race/impl.mjs
+```
 
-### [fan-out](./patterns/fan-out/)
-A task is split into independent subtasks, each handled by a separate agent in parallel. Results are merged by an aggregator agent.
+The others call the Claude API:
 
----
+```bash
+npm install @anthropic-ai/sdk
+export ANTHROPIC_API_KEY=...
+node patterns/loop-with-guard/impl.mjs
+```
 
-### [router](./patterns/router/)
-A classifier agent analyzes the input and dispatches to the appropriate specialist agent. The routing decision is made once, upfront.
-
-**Use case:** Incoming issue → router → `bug-fix-agent`, `feature-agent`, `refactor-agent`, or `security-agent`.
-
-**Implemented in:** [`ai-dev-tools`](https://github.com/koydas/ai-dev-tools) — `issue-router` agent dispatches incoming issues to specialist handlers; `code-builder` variants are selected based on routing output.
-
----
-
-### [critic-pair](./patterns/critic-pair/)
-Two agents play adversarial roles before a result is accepted. The proposer produces a solution; the challenger actively tries to break it; a judge makes the final call.
-
-**Use case:** High-stakes logic (auth, parsing, financial calculations) where a single-pass reviewer misses adversarial edge cases.
-
-**Implemented in:** [`ai-dev-tools`](https://github.com/koydas/ai-dev-tools) — `code-challenger` agent, enabled via the `--strict` flag on the review step.
-
----
-
-### [checkpoint-resume](./patterns/checkpoint-resume/)
-The pipeline persists its state after each step. On failure or restart, it resumes from the last saved checkpoint rather than restarting from scratch.
-
-**Use case:** Long pipelines (analyze → plan → implement → test) running in unstable environments — CI runners, rate-limited APIs, serverless.
-
-**Implemented in:** [`ai-dev-tools`](https://github.com/koydas/ai-dev-tools) — `checkpoint.mjs` script + `/resume` command persist and restore pipeline state. Also in [`autonomous-dev-loop`](https://github.com/koydas/autonomous-dev-loop) — pipeline state is persisted via GitHub Actions artifacts across job runs.
-
----
-
-### [speculative-race](./patterns/speculative-race/)
-Multiple agents tackle the same task in parallel with different strategies. All run to completion; a selector agent picks the best result.
-
-**Use case:** Bug with multiple plausible fix strategies (minimal patch vs robust rewrite vs refactor-first) when the best approach is uncertain upfront.
-
----
-
-### [reflexive-loop](./patterns/reflexive-loop/)
-A pipeline captures human feedback, extracts rules via a learn agent, and persists them into its own instruction set. Each subsequent run loads the enriched instructions without human re-intervention.
-
-**Implemented in:** [`ai-dev-tools`](https://github.com/koydas/ai-dev-tools) — `/learn` command + hierarchical `CLAUDE.md` as persistence vector. Also in [`autonomous-dev-loop`](https://github.com/koydas/autonomous-dev-loop) — `REQUEST_CHANGES → fix` cycles as capturable feedback signals injected into `prompts/*.md`.
-
----
-
-### [tool-grounded-review](./patterns/tool-grounded-review/)
-A reviewer agent judges a change from executed evidence — it gathers context and runs the repository's declared checks before its verdict. A failing check blocks approval in code, whatever the model concludes.
-
-**Use case:** LLM reviewer in a generate → review → fix loop, where a diff-only reviewer approves a red test suite.
-
-**Implemented in:** [`autonomous-dev-loop`](https://github.com/koydas/autonomous-dev-loop) — secret-free `evidence` job feeds check results to the review and forces `REQUEST_CHANGES` on failure (pushed-evidence variant). Also in [`ai-dev-tools`](https://github.com/koydas/ai-dev-tools) — `pr-analyst` / `code-reviewer` run the repo's checks and gate `DONE` on an Evidence table (tool-loop variant).
+`tool-grounded-review` ships with its own tests: `node --test patterns/tool-grounded-review/impl.test.mjs`.
 
 ---
 
@@ -112,7 +97,7 @@ patterns/
     └── impl.mjs      minimal working implementation (~50-100 lines)
 ```
 
-The line budget is a target, not a cap. Where the guards *are* the pattern, the implementation keeps them rather than hiding them: `loop-with-guard` (~130 lines: strict verdict parsing, reviewer-side repair, three escalation paths), `speculative-race` (~110 lines: per-strategy deadlines and failure filtering) and `tool-grounded-review` (~200 lines: both variants, a fail-closed gate with flaky and removed-script detection, isolated env and HOME, symlink-safe reads) run longer on purpose.
+The line budget is a target, not a cap. Where the guards *are* the pattern, the implementation keeps them rather than hiding them: `loop-with-guard` (~130 lines: strict verdict parsing, reviewer-side repair, three escalation paths), `speculative-race` (~110 lines: per-strategy deadlines and failure filtering) `tool-grounded-review` (~200 lines: both variants, a fail-closed gate with flaky and removed-script detection, isolated env and HOME, symlink-safe reads) and `staged-prompt-separation` (~200 lines, ~100 of them an inline system prompt sized past the provider's cacheable-prefix minimum so the second call shows a cache hit) run longer on purpose.
 
 ---
 
@@ -120,5 +105,5 @@ The line budget is a target, not a cap. Where the guards *are* the pattern, the 
 
 | Repo | What it demonstrates |
 |---|---|
-| [`autonomous-dev-loop`](https://github.com/koydas/autonomous-dev-loop) | `loop-with-guard` + `validator-first` + `tool-grounded-review` + `human-gate` in a GitHub Actions pipeline |
-| [`ai-dev-tools`](https://github.com/koydas/ai-dev-tools) | `sequential-pipeline` + `tool-grounded-review` + `human-gate` in a Claude Code toolbox |
+| [`autonomous-dev-loop`](https://github.com/koydas/autonomous-dev-loop) | `validator-first` + `label-driven-state-machine` + `loop-with-guard` + `tool-grounded-review` + `staged-prompt-separation` + `checkpoint-resume` + `human-gate` in a GitHub Actions pipeline |
+| [`ai-dev-tools`](https://github.com/koydas/ai-dev-tools) | `router` + `sequential-pipeline` + `typed-evidence-chain` + `ac-traceability` + `critic-pair` + `tool-grounded-review` + `checkpoint-resume` + `human-gate` in a Claude Code toolbox |

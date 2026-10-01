@@ -20,18 +20,17 @@ A pipeline observes its own past outputs and modifies its instruction set persis
 4. Rules are appended to `CLAUDE.md` (workspace root, repo-level, or a per-domain skill file).
 5. The next pipeline run loads the enriched instruction set automatically — the agent is stricter, more aligned, without any prompt editing by the developer.
 
-## Implementations
+## Status
+
+Reference implementation only (`impl.mjs`). Neither repo runs an automated learn step yet; both expose the persistence vector it would write to:
 
 **[`ai-dev-tools`](https://github.com/koydas/ai-dev-tools)**
-- `/learn` command reads the current session, extracts rules, and updates `CLAUDE.md`.
-- Hierarchical `CLAUDE.md` (workspace root → per-repo) acts as the persistence vector.
-- Learned rules become passive skills loaded automatically at session start.
-- Cycle: PR review → human nit-picks → `/learn` → `CLAUDE.md` enriched → next PR has fewer nit-picks.
+- Hierarchical `CLAUDE.md` (workspace root → per-repo) and skills loaded at session start.
+- Target cycle: PR review → human nit-picks → learn step → `CLAUDE.md` enriched → next PR has fewer nit-picks.
 
 **[`autonomous-dev-loop`](https://github.com/koydas/autonomous-dev-loop)**
-- `code-generation → pr-review → auto-fix` loop with a 3-iteration cap.
-- `prompts/*.md` files loaded at runtime are the natural injection point for learned rules.
-- Each `REQUEST_CHANGES → fix` cycle is a capturable feedback signal.
+- `prompts/*.md` files loaded at runtime are the injection point for learned rules.
+- Each `REQUEST_CHANGES → fix` cycle in the 3-iteration auto-fix loop is a capturable feedback signal.
 
 ## When to use
 

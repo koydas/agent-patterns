@@ -40,6 +40,11 @@ A reviewer agent judges a change from **executed evidence**, not from reading th
 
 Start with **A**. Move to **B** when reviews are missing context the fixed list cannot anticipate — and keep A's evidence as B's seed context.
 
+## Where it came from
+
+- **A diff-only reviewer approved a crashing patch.** In a benchmark run of `autonomous-dev-loop`'s production prompts (local 7B model, synthetic issue), a generated React hook imported an undeclared npm package and assigned to the getter-only `AbortController.prototype.signal` (a `TypeError` on first use), with no tests. The paired single-shot reviewer returned `APPROVED` with no findings. → [ADR-0019](https://github.com/koydas/autonomous-dev-loop/blob/main/docs/adr/0019-static-verification-backstop.md) (Proposed), [ADR-0024](https://github.com/koydas/autonomous-dev-loop/blob/main/docs/adr/0024-tool-evidence-for-pr-review.md)
+- **Same gap in the interactive toolbox.** `ai-dev-tools`' reviewers could report `DONE` while the suite was red, and trusted the builder's evidence as written. → [ADR-009](https://github.com/koydas/ai-dev-tools/blob/main/docs/adr/ADR-009-tool-grounded-review.md)
+
 ## When to use
 
 - Generated code, or any pipeline where the reviewer is itself an LLM: a reviewer that cannot execute anything will approve a red test suite.

@@ -20,6 +20,10 @@ Each pipeline stage stores its prompt in two files: a system file containing the
 3. The system prompt is sent with `cache_control: ephemeral` (Anthropic) or equivalent. Subsequent calls with the same system prompt hit the cache — input tokens are not re-billed.
 4. Changing guardrails or output format requires editing only the system file, with no code change.
 
+## Where it came from
+
+- `autonomous-dev-loop` sent the same large system prompt (`generation-system.md`, `auto-fix-system.md`, `pr-review-system.md`) on every retry and every re-invocation of a stage. Splitting invariant system files from per-call user files made the system prompt cacheable on the Anthropic path; Groq, the default provider, has no equivalent. → [ADR-0014](https://github.com/koydas/autonomous-dev-loop/blob/main/docs/adr/0014-anthropic-prompt-caching.md)
+
 ## When to use
 
 - Pipelines where the same agent is called multiple times with different inputs (retry loops, batch processing).
