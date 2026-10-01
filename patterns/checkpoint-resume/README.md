@@ -23,6 +23,10 @@ The pipeline persists its state after each step. On failure or restart, it resum
 3. After each step completes, the full accumulated state is **written to disk**.
 4. On successful completion, the checkpoint is cleared.
 
+## Where it came from
+
+- GitHub Actions jobs run on ephemeral VMs. In `autonomous-dev-loop`, a runner timeout, billing cap or transient API failure mid-pipeline left no record of completed steps, so the workflow restarted from step 1 and paid again for LLM calls that had already succeeded. → [ADR-0011](https://github.com/koydas/autonomous-dev-loop/blob/main/docs/adr/0011-checkpoint-resume-state-persistence.md)
+
 ## When to use
 
 - Pipelines with expensive intermediate steps (slow agents, API calls, file generation) where restarting from zero is wasteful.

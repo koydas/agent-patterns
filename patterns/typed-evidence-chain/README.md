@@ -28,6 +28,10 @@ Specialized builders share a common output interface but append a type-specific 
    - REFACTOR review: are there pre-existing tests? Do they still pass?
    - FEATURE review: is every AC item checked with a code location?
 
+## Where it came from
+
+- In `ai-dev-tools`, builder evidence (`### Reproduction`, `### Non-regression evidence`) was trusted as written and never re-executed. The reviewer now re-runs it before judging. → [ADR-009](https://github.com/koydas/ai-dev-tools/blob/main/docs/adr/ADR-009-tool-grounded-review.md)
+
 ## When to use
 
 - Pipelines where the same reviewer agent handles multiple change types and needs different validation signals per type.

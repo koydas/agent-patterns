@@ -21,6 +21,11 @@ External system labels are used as state tokens in an asynchronous pipeline. Eac
 3. **Re-pulse**: re-applying a label that already exists on the PR emits a fresh `labeled` event, triggering the same workflow again — this is the retry mechanism without any polling or sleep.
 4. Attempt counters are encoded directly in label names (`auto-fix-attempt-1`, `auto-fix-attempt-2`) so the label set is the only state store needed.
 
+## Where it came from
+
+- **Formal review events were not reliable.** Some repositories block Actions from submitting `REQUEST_CHANGES`, so auto-fix waiting on `pull_request_review` never fired. And re-applying a label that is already present emits no new event, so later review iterations silently skipped auto-fix. Hence labels as state, plus the remove-then-add *re-pulse*. → [ADR-0006](https://github.com/koydas/autonomous-dev-loop/blob/main/docs/adr/0006-label-driven-auto-fix-trigger.md)
+- **Labels are read without a lock.** Two `changes-requested` events close together started two auto-fix runs that read the same `auto-fix-attempt-N` count. Per-PR concurrency groups now serialize the workflows. → [ADR-0020](https://github.com/koydas/autonomous-dev-loop/blob/main/docs/adr/0020-per-pr-workflow-concurrency.md)
+
 ## When to use
 
 - Multi-stage pipelines running across GitHub Actions workflows where passing state via artifacts is cumbersome.
