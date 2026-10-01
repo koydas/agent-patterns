@@ -5,7 +5,7 @@ flowchart TD
     Change([Code change]) --> Context[Gather context\nconventions, ADRs, git history]
     Change --> Tools[Run declared checks\ntests, lint, scans]
     Context --> Reviewer[Reviewer agent]
-    Tools --> Evidence[(Evidence\nPASS / FAIL / UNVERIFIED)]
+    Tools --> Evidence[(Evidence\nPASS / FAIL / UNVERIFIED / N/A)]
     Evidence --> Reviewer
     Reviewer --> Gate{Evidence}
     Gate -- any FAIL --> Changes([REQUEST_CHANGES\n+ failure output])
@@ -92,15 +92,16 @@ Start with **A**. Move to **B** when reviews are missing context the fixed list 
 node impl.mjs <repo-path>                    # variant A: pushed evidence (base defaults to HEAD~1)
 node impl.mjs <repo-path> --loop             # variant B: bounded tool-use loop
 node impl.mjs <repo-path> --base=origin/main # review a branch against its base
-node --test impl.test.mjs                    # the gate: verdict parsing and evidence policy
+node --test impl.test.mjs                    # the gate: verdict parsing and evidence policy (no dependency needed)
 ```
 
 What it implements from the failure modes above:
-- **Gate in code, fail closed** — any `FAIL` *or* `UNVERIFIED` declared check blocks approval, including a check that never ran; `N/A` (the repo does not declare that script) does not. The verdict must be a strict JSON object; anything else is not an approval.
-- **No credential exposure** — checks run with an allowlisted env (`PATH`, `HOME`, `CI`), never the reviewer's API key.
+- **Gate in code, fail closed** — any `FAIL` *or* `UNVERIFIED` declared check blocks approval, including a check that never ran; `N/A` (neither the base nor the change declares that script) does not. A check with both a `FAIL` and a `PASS` is flaky, hence unverified: re-running until green is not a pass. The verdict must be a strict JSON object, read from the last text block; anything else is not an approval.
+- **No silent opt-out** — the declared scripts are also read from the base ref (`git show <base>:package.json`): a script the base declares and the change removes is `UNVERIFIED`, not `N/A`.
+- **No credential exposure** — checks run with an allowlisted env (`PATH`, `CI`) and an empty temporary `HOME`, so neither the reviewer's API key nor `~/.npmrc`, `~/.aws` or gh tokens are in reach.
 - **Confined reads** — `read_file` resolves symlinks (`realpath`) before the repo-root check.
 - **Untrusted data** — diff, file contents and check output are fenced in tags the system prompt marks as data.
 
 Variant A gathers context only from a root `CLAUDE.md` / `AGENTS.md`; variant B reads what it needs.
 
-**Does not cover** (handle these before relying on it): checks and their config run from the reviewed tree (*self-neutering checks* — read them from the base ref); evidence is not bound to a commit SHA (*stale evidence*); checks run on the host, isolated only by env (run them in a container without secrets).
+**Does not cover** (handle these before relying on it): what a script *does* still comes from the reviewed tree — the change can rewrite `"test"` to `true` (*self-neutering checks*: run the commands from the base ref, or flag a modified `package.json` as non-authoritative); evidence is not bound to a commit SHA (*stale evidence*); checks run on the host, isolated only by env (run them in a container without secrets).

@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { parseVerdict, verdict } from "./impl.mjs";
+import { checkStatus, classifyScript, parseVerdict, verdict } from "./impl.mjs";
 
 const APPROVED = '{"verdict": "APPROVED", "reasons": []}';
 const pass = (name) => ({ name, status: "PASS" });
@@ -34,9 +34,26 @@ test("a check the repo does not declare (N/A) does not block", () => {
   assert.equal(verdict({ evidence: [pass("test"), { name: "lint", status: "N/A" }], review: APPROVED }).approved, true);
 });
 
-test("the last run of a check wins", () => {
+test("a FAIL followed by a PASS is flaky, not a pass", () => {
   const evidence = [{ name: "test", status: "FAIL" }, pass("test"), pass("lint")];
-  assert.equal(verdict({ evidence, review: APPROVED }).approved, true);
+  const r = verdict({ evidence, review: APPROVED });
+  assert.equal(r.approved, false);
+  assert.deepEqual(r.unverified, ["test"]);
+  assert.deepEqual(r.failing, []);
+});
+
+test("checkStatus: a retried infra failure that then passes is a pass", () => {
+  assert.equal(checkStatus(["UNVERIFIED", "PASS"]), "PASS");
+  assert.equal(checkStatus(["PASS", "FAIL"]), "FLAKY");
+  assert.equal(checkStatus(["FAIL", "FAIL"]), "FAIL");
+  assert.equal(checkStatus([]), "UNVERIFIED");
+  assert.equal(checkStatus(["N/A"]), "N/A");
+});
+
+test("classifyScript: a script removed by the change is unverified, not N/A", () => {
+  assert.equal(classifyScript("test", {}, { test: "node --test" }), "UNVERIFIED");
+  assert.equal(classifyScript("test", { test: "node --test" }, {}), "RUN");
+  assert.equal(classifyScript("lint", {}, {}), "N/A");
 });
 
 test("parseVerdict accepts one JSON object, optionally fenced", () => {
