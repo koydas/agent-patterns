@@ -97,7 +97,7 @@ node --test impl.test.mjs                    # the gate: verdict parsing and evi
 
 What it implements from the failure modes above:
 - **Gate in code, fail closed** — any `FAIL` *or* `UNVERIFIED` declared check blocks approval, including a check that never ran; `N/A` (neither the base nor the change declares that script) does not. A check with both a `FAIL` and a `PASS` is flaky, hence unverified: re-running until green is not a pass. The verdict must be a strict JSON object, read from the last text block; anything else is not an approval.
-- **No silent opt-out** — the declared scripts are also read from the base ref (`git show <base>:package.json`): a script the base declares and the change removes is `UNVERIFIED`, not `N/A`.
+- **No silent opt-out** — the declared scripts are also read from the base ref (`git show <base>:./package.json`, so `<repo-path>` may be a package inside a larger repo): a script the base declares and the change removes is `UNVERIFIED`, not `N/A`. If the base cannot be read for any reason other than having no `package.json`, a missing script is `UNVERIFIED` too. The gate output keeps each check's status (`checks`), so a `FLAKY` is distinguishable from a timeout or a removed script.
 - **No credential exposure** — checks run with an allowlisted env (`PATH`, `CI`) and an empty temporary `HOME`, so neither the reviewer's API key nor `~/.npmrc`, `~/.aws` or gh tokens are in reach.
 - **Confined reads** — `read_file` resolves symlinks (`realpath`) before the repo-root check.
 - **Untrusted data** — diff, file contents and check output are fenced in tags the system prompt marks as data.

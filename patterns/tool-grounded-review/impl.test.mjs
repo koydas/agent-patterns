@@ -7,7 +7,7 @@ const pass = (name) => ({ name, status: "PASS" });
 
 test("approves when the model approves and every declared check passed", () => {
   assert.deepEqual(verdict({ evidence: [pass("test"), pass("lint")], review: APPROVED }), {
-    approved: true, overridden: false, failing: [], unverified: [],
+    approved: true, overridden: false, failing: [], unverified: [], checks: { test: "PASS", lint: "PASS" },
   });
 });
 
@@ -40,6 +40,7 @@ test("a FAIL followed by a PASS is flaky, not a pass", () => {
   assert.equal(r.approved, false);
   assert.deepEqual(r.unverified, ["test"]);
   assert.deepEqual(r.failing, []);
+  assert.equal(r.checks.test, "FLAKY", "the reason stays visible to the human gate");
 });
 
 test("checkStatus: a retried infra failure that then passes is a pass", () => {
@@ -54,6 +55,11 @@ test("classifyScript: a script removed by the change is unverified, not N/A", ()
   assert.equal(classifyScript("test", {}, { test: "node --test" }), "UNVERIFIED");
   assert.equal(classifyScript("test", { test: "node --test" }, {}), "RUN");
   assert.equal(classifyScript("lint", {}, {}), "N/A");
+});
+
+test("classifyScript: an unreadable base fails closed", () => {
+  assert.equal(classifyScript("test", {}, null), "UNVERIFIED");
+  assert.equal(classifyScript("test", { test: "node --test" }, null), "RUN");
 });
 
 test("parseVerdict accepts one JSON object, optionally fenced", () => {

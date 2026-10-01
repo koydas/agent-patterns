@@ -1,5 +1,5 @@
 import { execFile } from "node:child_process";
-import { mkdtemp, readFile, realpath } from "node:fs/promises";
+import { mkdtemp, readFile, realpath, rm } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -26,16 +26,22 @@ const SYSTEM =
 
 // A check the base declares must still run on the head: deleting the script is not a way to skip it.
 // Only a check neither side declares is N/A.
+// `baseScripts` is null when the base could not be read: then a missing script cannot be proven
+// undeclared, so it is unverified rather than N/A (fail closed).
 export function classifyScript(name, headScripts, baseScripts) {
   if (headScripts[name]) return "RUN";
-  return baseScripts[name] ? "UNVERIFIED" : "N/A";
+  return baseScripts === null || baseScripts[name] ? "UNVERIFIED" : "N/A";
 }
 
 async function reviewContext(repo, base) {
   // Read from git, not the working tree: the base side must not be editable by the change.
-  const baseScripts = await run("git", ["show", `${base}:package.json`], { cwd: repo })
+  // `./` resolves the path from cwd, so <repo-path> may be a package inside a larger git repo.
+  const baseScripts = await run("git", ["show", `${base}:./package.json`], { cwd: repo })
     .then(({ stdout }) => scriptsOf(stdout))
-    .catch(() => ({})); // no package.json on the base: nothing was declared there
+    .catch((err) =>
+      // Only "no package.json on the base" means nothing was declared there; any other failure
+      // (bad ref, corrupt JSON) must not open the gate.
+      /does not exist in|exists on disk, but not in/.test(err.stderr ?? "") ? {} : null);
   return { repo, baseScripts, home: await mkdtemp(path.join(os.tmpdir(), "review-home-")) };
 }
 
@@ -172,7 +178,9 @@ export function verdict({ evidence, review }, declared = CHECKS) {
   const unverified = declared.filter((n) => !["PASS", "FAIL", "N/A"].includes(status(n)));
   const llmApproved = parseVerdict(review) === "APPROVED";
   const blocked = failing.length > 0 || unverified.length > 0;
-  return { approved: llmApproved && !blocked, overridden: llmApproved && blocked, failing, unverified };
+  // `checks` keeps the reason behind each unverified entry (FLAKY, UNVERIFIED, never ran) for the human gate.
+  const checks = Object.fromEntries(declared.map((n) => [n, status(n)]));
+  return { approved: llmApproved && !blocked, overridden: llmApproved && blocked, failing, unverified, checks };
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
@@ -180,8 +188,12 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const base = flags.find((f) => f.startsWith("--base="))?.slice(7) ?? "HEAD~1";
   const { stdout: diff } = await run("git", ["diff", base], { cwd: repo, maxBuffer: 64 * 1024 * 1024 });
   const ctx = await reviewContext(repo, base);
-  const result = await (flags.includes("--loop") ? reviewWithToolLoop : reviewWithPushedEvidence)(ctx, diff);
-  console.log(result.review);
-  console.log("\nEvidence:", result.evidence.map((e) => `${e.name}=${e.status}`).join(", ") || "none");
-  console.log("Gate:", verdict(result));
+  try {
+    const result = await (flags.includes("--loop") ? reviewWithToolLoop : reviewWithPushedEvidence)(ctx, diff);
+    console.log(result.review);
+    console.log("\nEvidence:", result.evidence.map((e) => `${e.name}=${e.status}`).join(", ") || "none");
+    console.log("Gate:", verdict(result));
+  } finally {
+    await rm(ctx.home, { recursive: true, force: true }); // npm writes its cache there
+  }
 }
