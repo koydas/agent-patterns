@@ -82,6 +82,15 @@ A pipeline captures human feedback, extracts rules via a learn agent, and persis
 
 ---
 
+### [tool-grounded-review](./patterns/tool-grounded-review/)
+A reviewer agent judges a change from executed evidence — it gathers context and runs the repository's declared checks before its verdict. A failing check blocks approval in code, whatever the model concludes.
+
+**Use case:** LLM reviewer in a generate → review → fix loop, where a diff-only reviewer approves a red test suite.
+
+**Implemented in:** [`autonomous-dev-loop`](https://github.com/koydas/autonomous-dev-loop) — secret-free `evidence` job feeds check results to the review and forces `REQUEST_CHANGES` on failure (pushed-evidence variant). Also in [`ai-dev-tools`](https://github.com/koydas/ai-dev-tools) — `pr-analyst` / `code-reviewer` run the repo's checks and gate `DONE` on an Evidence table (tool-loop variant).
+
+---
+
 ## Production notes
 
 The implementations target `claude-opus-5-5` and stay minimal on purpose. Before running them in production:
@@ -103,7 +112,7 @@ patterns/
     └── impl.mjs      minimal working implementation (~50-100 lines)
 ```
 
-The line budget is a target, not a cap. Where the guards *are* the pattern, the implementation keeps them rather than hiding them: `loop-with-guard` (~130 lines: strict verdict parsing, reviewer-side repair, three escalation paths) and `speculative-race` (~110 lines: per-strategy deadlines and failure filtering) run longer on purpose.
+The line budget is a target, not a cap. Where the guards *are* the pattern, the implementation keeps them rather than hiding them: `loop-with-guard` (~130 lines: strict verdict parsing, reviewer-side repair, three escalation paths), `speculative-race` (~110 lines: per-strategy deadlines and failure filtering) and `tool-grounded-review` (~200 lines: both variants, a fail-closed gate with flaky and removed-script detection, isolated env and HOME, symlink-safe reads) run longer on purpose.
 
 ---
 
@@ -111,5 +120,5 @@ The line budget is a target, not a cap. Where the guards *are* the pattern, the 
 
 | Repo | What it demonstrates |
 |---|---|
-| [`autonomous-dev-loop`](https://github.com/koydas/autonomous-dev-loop) | `loop-with-guard` + `validator-first` + `human-gate` in a GitHub Actions pipeline |
-| [`ai-dev-tools`](https://github.com/koydas/ai-dev-tools) | `sequential-pipeline` + `human-gate` in a Claude Code toolbox |
+| [`autonomous-dev-loop`](https://github.com/koydas/autonomous-dev-loop) | `loop-with-guard` + `validator-first` + `tool-grounded-review` + `human-gate` in a GitHub Actions pipeline |
+| [`ai-dev-tools`](https://github.com/koydas/ai-dev-tools) | `sequential-pipeline` + `tool-grounded-review` + `human-gate` in a Claude Code toolbox |
