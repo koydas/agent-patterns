@@ -23,6 +23,11 @@ A human approval step is placed at the boundary between autonomous execution and
 5. On rejection — or if no answer is given — the pipeline halts. Nothing is committed.
 6. If the pipeline's own model call is refused by a safety classifier, it ends at the gate the same way: halted, reported, no action.
 
+## Where it came from
+
+- `ai-dev-tools` chose the human as a gate, not a relay: the developer approves at the points that need context or business judgement, and nothing is merged without them. → [ADR-001](https://github.com/koydas/ai-dev-tools/blob/main/docs/adr/ADR-001-human-as-gate.md)
+- `autonomous-dev-loop` automates everything up to the merge and never merges: no merge call exists anywhere in its scripts or workflows.
+
 ## When to use
 
 - Any pipeline whose final action is irreversible: merges, deploys, emails, billing charges.

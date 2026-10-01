@@ -21,6 +21,10 @@ A validation agent runs before the main pipeline is triggered. Issues that don't
 4. The verdict is parsed strictly (one surrounding ` ```json ` fence is tolerated). Unparseable output fails closed with its own label, `validator-error`: the pipeline is blocked, but the fault is the validator's, not the issue's, so it goes to a human instead of back to the issue author.
 5. The validator runs on every request, so it runs at `low` effort with a small `max_tokens`; the main pipeline keeps `medium`. Effort is a per-role decision, not a global setting.
 
+## Where it came from
+
+- In `autonomous-dev-loop`, generation used to require a manual `ai-task` label on top of validation. The validation agent (score ≥ 70, no blockers) was made the single gate instead: only issues it labels `ready-for-dev` ever reach code generation. → [ADR-0001](https://github.com/koydas/autonomous-dev-loop/blob/main/docs/adr/0001-trigger-policy-and-label-gate.md)
+
 ## When to use
 
 - Pipelines where under-specified input leads to wasted LLM calls or incorrect output.
