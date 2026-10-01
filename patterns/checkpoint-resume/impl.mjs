@@ -2,17 +2,25 @@ import Anthropic from "@anthropic-ai/sdk";
 import { readFileSync, writeFileSync, existsSync, renameSync } from "fs";
 
 const client = new Anthropic();
+
+// Opus 5.5 always thinks, so find the text block by type. Anything but end_turn
+// (refusal, max_tokens) is not a usable answer.
+function readText(response) {
+  if (response.stop_reason !== "end_turn") throw new Error(`no usable answer (stop_reason: ${response.stop_reason})`);
+  return response.content.find((b) => b.type === "text")?.text ?? "";
+}
 const CHECKPOINT_FILE = "./checkpoint.json";
 const CHECKPOINT_TMP = "./checkpoint.json.tmp";
 
 async function runAgent(systemPrompt, userPrompt) {
   const response = await client.messages.create({
-    model: "claude-sonnet-4-6",
-    max_tokens: 1024,
+    model: "claude-opus-5-5",
+    max_tokens: 16000, // thinking counts toward it
+    output_config: { effort: "medium" }, // explicit: defaults differ between models
     system: systemPrompt,
     messages: [{ role: "user", content: userPrompt }],
   });
-  return response.content[0].text;
+  return readText(response);
 }
 
 function loadCheckpoint() {

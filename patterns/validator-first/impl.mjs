@@ -2,21 +2,32 @@ import Anthropic from "@anthropic-ai/sdk";
 
 const client = new Anthropic();
 
-async function runAgent(systemPrompt, userPrompt) {
+// Opus 5.5 always thinks, so find the text block by type. Anything but end_turn
+// (refusal, max_tokens) is not a usable answer.
+function readText(response) {
+  if (response.stop_reason !== "end_turn") throw new Error(`no usable answer (stop_reason: ${response.stop_reason})`);
+  return response.content.find((b) => b.type === "text")?.text ?? "";
+}
+
+// Effort is a per-role decision: a gate or classifier runs cheap and fast,
+// the agents behind it get the budget.
+async function runAgent(systemPrompt, userPrompt, { effort = "medium", maxTokens = 16000 } = {}) {
   const response = await client.messages.create({
-    model: "claude-sonnet-4-6",
-    max_tokens: 512,
+    model: "claude-opus-5-5",
+    max_tokens: maxTokens, // thinking counts toward it
+    output_config: { effort },
     system: systemPrompt,
     messages: [{ role: "user", content: userPrompt }],
   });
-  return response.content[0].text;
+  return readText(response);
 }
 
 async function validate(issue) {
   const result = await runAgent(
     "You are a validation agent. Check if the issue is specific enough to act on. " +
       "Start your response with exactly VALID or NEEDS_REFINEMENT, then give a one-sentence reason.",
-    `Issue: ${issue}`
+    `Issue: ${issue}`,
+    { effort: "low", maxTokens: 4000 } // the gate runs on every request: keep it cheap and fast
   );
   return { valid: result.startsWith("VALID"), reason: result };
 }

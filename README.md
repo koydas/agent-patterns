@@ -82,6 +82,18 @@ A pipeline captures human feedback, extracts rules via a learn agent, and persis
 
 ---
 
+## Production notes
+
+The implementations target `claude-opus-5-5` and stay minimal on purpose. Before running them in production:
+
+- **Read responses by block type.** The model always thinks, so the first content block can be `thinking`; check `stop_reason` before reading `content`. Every `impl.mjs` does this.
+- **Allocate effort per role.** Gates and classifiers (`validator-first`, `router`) run at `low`; agents that do the work run at `medium`. Set `effort` explicitly — defaults differ between models. Lowering effort on the most capable model is usually a better first move than a multi-model cascade: one model, one cache namespace.
+- **Refusal fallbacks.** Safety classifiers can decline a request (`stop_reason: "refusal"`). The examples surface it (and escalate where the pattern has a gate) but do not retry. In production, opt into server-side fallbacks on the Claude API (`fallbacks: "default"`, beta `server-side-fallback-2026-07-01`) or the SDK's refusal-fallback middleware on Bedrock, Vertex and Foundry — and log `response.model`, because a fallback silently changes which model answered.
+- **Append-only history.** Multi-turn exchanges must pass earlier assistant turns back unchanged, thinking blocks included; editing history invalidates later thinking blocks.
+- **`max_tokens` covers thinking + reply.** Size it for both; a limit tuned for a non-thinking model truncates.
+
+---
+
 ## Structure
 
 ```
@@ -90,6 +102,8 @@ patterns/
     ├── README.md     pattern description, diagram, trade-offs, when not to use
     └── impl.mjs      minimal working implementation (~50-100 lines)
 ```
+
+The line budget is a target, not a cap. Where the guards *are* the pattern, the implementation keeps them rather than hiding them: `loop-with-guard` (~130 lines: strict verdict parsing, reviewer-side repair, three escalation paths) and `speculative-race` (~110 lines: per-strategy deadlines and failure filtering) run longer on purpose.
 
 ---
 

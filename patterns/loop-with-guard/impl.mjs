@@ -4,20 +4,26 @@ const client = new Anthropic();
 const MAX_ROUNDS = 5;
 const MAX_REVIEW_ATTEMPTS = 2; // first try + one repair turn
 
+// Thrown on a safety-classifier refusal, so the loop can escalate instead of crashing.
+class RefusalError extends Error {}
+
 async function runAgent(systemPrompt, messages) {
   const response = await client.messages.create({
-    model: "claude-sonnet-4-6",
-    max_tokens: 4096,
+    model: "claude-opus-5-5",
+    max_tokens: 16000, // thinking counts toward it
+    output_config: { effort: "medium" }, // explicit: defaults differ between models
     system: systemPrompt,
     messages,
   });
-  // Truncated output is not a verdict and not reviewable code — fail loudly.
+  if (response.stop_reason === "refusal") throw new RefusalError("request refused by safety classifier");
+  // A truncation or an empty answer is not a verdict and not reviewable code — fail loudly.
   if (response.stop_reason === "max_tokens") {
     throw new Error("output truncated at max_tokens — raise the limit or narrow the task");
   }
-  const block = response.content.find((b) => b.type === "text");
-  if (!block) throw new Error(`no text in response (stop_reason: ${response.stop_reason})`);
-  return block.text;
+  // Opus 5.5 always thinks, so find the text block by type, not position.
+  const text = response.content.find((b) => b.type === "text")?.text;
+  if (!text) throw new Error(`no text in response (stop_reason: ${response.stop_reason})`);
+  return { text, content: response.content };
 }
 
 // The coder may wrap code in prose; keep only the first fenced block if there is one.
@@ -58,13 +64,14 @@ const REVIEWER_SYSTEM =
 async function review(task, code) {
   const messages = [{ role: "user", content: `<task>\n${task}\n</task>\n\n<code>\n${code}\n</code>` }];
   for (let attempt = 1; attempt <= MAX_REVIEW_ATTEMPTS; attempt++) {
-    const raw = await runAgent(REVIEWER_SYSTEM, messages);
+    const { text: raw, content } = await runAgent(REVIEWER_SYSTEM, messages);
     try {
       return parseReview(raw);
     } catch (err) {
       console.log(`[reviewer] invalid verdict, attempt ${attempt}/${MAX_REVIEW_ATTEMPTS}: ${err.message}`);
       messages.push(
-        { role: "assistant", content: raw || "(empty)" }, // the API rejects empty turns
+        // Append the full turn, thinking blocks unchanged: history is append-only.
+        { role: "assistant", content },
         { role: "user", content: `That is not a valid verdict (${err.message}). Respond with only the JSON object.` }
       );
     }
@@ -80,15 +87,22 @@ async function loopWithGuard(task) {
   for (let round = 1; round <= MAX_ROUNDS; round++) {
     console.log(`\n--- Round ${round}/${MAX_ROUNDS} ---`);
 
-    const coderOutput = await runAgent(
-      "You are a coding agent. Write or improve code based on the task and any reviewer feedback. " +
-        "Return the complete code in a single fenced code block.",
-      [{ role: "user", content: `Task: ${task}\n\nPrevious code:\n${code}\n\nReviewer feedback:\n${feedback}` }]
-    );
-    code = extractCode(coderOutput);
-    console.log("[coder]", code.slice(0, 120).replace(/\n/g, " ") + "...");
-
-    const verdict = await review(task, code);
+    let verdict;
+    try {
+      const { text: coderOutput } = await runAgent(
+        "You are a coding agent. Write or improve code based on the task and any reviewer feedback. " +
+          "Return the complete code in a single fenced code block.",
+        [{ role: "user", content: `Task: ${task}\n\nPrevious code:\n${code}\n\nReviewer feedback:\n${feedback}` }]
+      );
+      code = extractCode(coderOutput);
+      console.log("[coder]", code.slice(0, 120).replace(/\n/g, " ") + "...");
+      verdict = await review(task, code);
+    } catch (err) {
+      // A refusal is not something another round can fix — hand it to the human gate.
+      if (!(err instanceof RefusalError)) throw err;
+      console.log(`\n⚠ ${err.message} — escalating to human gate.`);
+      return { code, rounds: round, escalated: true, reason: err.message, lastReview };
+    }
     if (verdict === null) {
       // Fail closed: no verdict never approves. A reviewer that cannot produce one
       // is a system fault, not a code fault — escalate instead of burning rounds.

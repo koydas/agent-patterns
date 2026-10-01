@@ -9,14 +9,22 @@ import Anthropic from "@anthropic-ai/sdk";
 
 const client = new Anthropic();
 
+// Opus 5.5 always thinks, so find the text block by type. Anything but end_turn
+// (refusal, max_tokens) is not a usable answer.
+function readText(response) {
+  if (response.stop_reason !== "end_turn") throw new Error(`no usable answer (stop_reason: ${response.stop_reason})`);
+  return response.content.find((b) => b.type === "text")?.text ?? "";
+}
+
 async function runAgent(system, user) {
   const response = await client.messages.create({
-    model: "claude-sonnet-4-6",
-    max_tokens: 1024,
+    model: "claude-opus-5-5",
+    max_tokens: 16000, // thinking counts toward it
+    output_config: { effort: "medium" }, // explicit: defaults differ between models
     system,
     messages: [{ role: "user", content: user }],
   });
-  return response.content[0].text;
+  return readText(response);
 }
 
 // --- Builder: produces patch + AC coverage block ---
