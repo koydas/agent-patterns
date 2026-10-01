@@ -43,12 +43,14 @@ async function onValidatorRun() {
 async function onReadyForDev() {
   console.log("[generator] Generating code for PR #" + pr.number + "...");
   // ... code generation ...
+  removeLabel("ready-for-dev"); // consumed: the PR now exists
   applyLabel("needs-review");
 }
 
 // Stage 3: Reviewer — triggered by needs-review
 async function onNeedsReview() {
   console.log("[reviewer] Reviewing PR #" + pr.number + "...");
+  removeLabel("needs-review"); // consumed: a verdict label replaces it
   pr.attempt += 1;
   const approved = pr.attempt >= 2; // simulate: passes on 2nd review
 
