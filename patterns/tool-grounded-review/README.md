@@ -74,10 +74,10 @@ Start with **A**. Move to **B** when reviews are missing context the fixed list 
 
 ## Implementations
 
-**[`autonomous-dev-loop`](https://github.com/koydas/autonomous-dev-loop)** — variant A ([ADR-0020](https://github.com/koydas/autonomous-dev-loop/blob/main/docs/adr/0020-tool-evidence-for-pr-review.md))
-- A secret-free `evidence` job runs the checks in `config/review-evidence.yaml` on the PR head SHA and uploads the results.
+**[`autonomous-dev-loop`](https://github.com/koydas/autonomous-dev-loop)** — variant A ([ADR-0024](https://github.com/koydas/autonomous-dev-loop/blob/main/docs/adr/0024-tool-evidence-for-pr-review.md))
+- A secret-free `evidence` job runs the checks in `config/review-evidence.yaml` on the PR head SHA and uploads the results. The runner and its config come from the default branch (ADR-0023), so a PR cannot change the checks for its own run; evidence is written outside the checkout.
 - `pr_review.mjs` injects them into the review prompt, forces `REQUEST_CHANGES` on any `fail`, and appends a `🧪 Tool Evidence` section that the auto-fix stage reads as feedback.
-- Missing or stale evidence and timeouts are surfaced as unverified; a PR modifying the evidence config gets non-authoritative passes.
+- Missing or stale evidence and timeouts are surfaced as unverified; a PR modifying `package.json` or the review workflow gets non-authoritative passes.
 
 **[`ai-dev-tools`](https://github.com/koydas/ai-dev-tools)** — closer to variant B ([ADR-009](https://github.com/koydas/ai-dev-tools/blob/main/docs/adr/ADR-009-tool-grounded-review.md))
 - `pr-analyst` and `code-reviewer` run inside Claude Code: they gather context, discover check commands from the repo, run them, and re-execute builder evidence (`### Reproduction`, `### Non-regression evidence`).
