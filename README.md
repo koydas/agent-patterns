@@ -1,14 +1,35 @@
 # agent-patterns
 
-**15 patterns for multi-agent systems — each with a diagram, trade-offs, failure modes, when *not* to use it, and a runnable `impl.mjs`.**
+**Multi-agent pipeline misbehaving? Find the pattern by the symptom, not the name.**
 
-Not a framework. Every pattern here was named after the problem it solved in a pipeline that runs: 12 of 15 are in production code in [`autonomous-dev-loop`](https://github.com/koydas/autonomous-dev-loop) (GitHub Actions, headless) or [`ai-dev-tools`](https://github.com/koydas/ai-dev-tools) (Claude Code, interactive), with the file paths to prove it. The other 3 are marked as reference implementations.
+15 patterns, each with a diagram, failure modes, when *not* to use it and a runnable `impl.mjs`. 12 of them are used in two public repos — every row below names where; the other 3 are marked reference-only.
+
+```mermaid
+flowchart LR
+    I[Issue] --> V["validator-first<br/>vague issue → no PR"]
+    V --> G[generator]
+    G --> E["tool-grounded-review<br/>red tests → no APPROVE"]
+    E --> L{"loop-with-guard<br/>attempt ≤ 3?"}
+    L -->|yes| F[auto-fix] --> E
+    L -->|no| H["human-gate<br/>a person merges"]
+    E -->|approve| H
+```
+
+<sub>How five of the patterns compose in [`autonomous-dev-loop`](https://github.com/koydas/autonomous-dev-loop), chained by `label-driven-state-machine`.</sub>
+
+**Try it** — no API key, Node ≥ 20:
+
+```bash
+git clone https://github.com/koydas/agent-patterns && cd agent-patterns
+node --test patterns/tool-grounded-review/impl.test.mjs   # 11 tests: the gate fails closed on red, flaky and removed checks
+node patterns/label-driven-state-machine/impl.mjs         # simulated GitHub label events
+```
 
 ## Find a pattern by the problem you have
 
 ### Flow control
 
-| Your problem | Pattern | In production |
+| Your problem | Pattern | Running in |
 |---|---|---|
 | Agents hand each other prose instead of contracts; a failure mid-chain goes unnoticed | [sequential-pipeline](./patterns/sequential-pipeline/) | [`ai-dev-tools`](https://github.com/koydas/ai-dev-tools) — `ticket-analyst → code-builder → code-reviewer` |
 | One generalist prompt handles bug fixes, features and refactors equally badly | [router](./patterns/router/) | [`ai-dev-tools`](https://github.com/koydas/ai-dev-tools) — `issue-router` agent |
@@ -18,7 +39,7 @@ Not a framework. Every pattern here was named after the problem it solved in a p
 
 ### Quality gates
 
-| Your problem | Pattern | In production |
+| Your problem | Pattern | Running in |
 |---|---|---|
 | Vague issues burn tokens and come back as garbage PRs | [validator-first](./patterns/validator-first/) | [`autonomous-dev-loop`](https://github.com/koydas/autonomous-dev-loop) — `needs-refinement` blocks generation |
 | The coder ↔ reviewer loop never ends, or ends on a malformed verdict | [loop-with-guard](./patterns/loop-with-guard/) | [`autonomous-dev-loop`](https://github.com/koydas/autonomous-dev-loop) — 3-attempt cap, then escalation |
@@ -30,19 +51,18 @@ Not a framework. Every pattern here was named after the problem it solved in a p
 
 ### Reliability and cost
 
-| Your problem | Pattern | In production |
+| Your problem | Pattern | Running in |
 |---|---|---|
 | A rate limit at step 4 restarts the whole pipeline | [checkpoint-resume](./patterns/checkpoint-resume/) | [`autonomous-dev-loop`](https://github.com/koydas/autonomous-dev-loop) — checkpoints as Actions artifacts; [`ai-dev-tools`](https://github.com/koydas/ai-dev-tools) — `checkpoint.mjs` + `/resume` |
-| The invariant system prompt is re-billed on every call; changing a guardrail needs a code change | [staged-prompt-separation](./patterns/staged-prompt-separation/) | [`autonomous-dev-loop`](https://github.com/koydas/autonomous-dev-loop) — `*-system.md` / `*-user.md` pairs, prompt caching |
+| The invariant system prompt is re-billed on every call; changing a guardrail needs a code change | [staged-prompt-separation](./patterns/staged-prompt-separation/) | [`autonomous-dev-loop`](https://github.com/koydas/autonomous-dev-loop) — `*-system.md` / `*-user.md` pairs, prompt caching on the Anthropic provider path |
 | The same review nit comes back on every PR | [reflexive-loop](./patterns/reflexive-loop/) | Reference only — injection points exist, no automated learn step yet |
 
 ## Run one
 
-Three patterns run offline, no API key:
+Two more patterns run offline, no API key:
 
 ```bash
 git clone https://github.com/koydas/agent-patterns && cd agent-patterns
-node patterns/label-driven-state-machine/impl.mjs   # simulated GitHub label events
 node patterns/fan-out/impl.mjs
 node patterns/speculative-race/impl.mjs
 ```
@@ -54,8 +74,6 @@ npm install @anthropic-ai/sdk
 export ANTHROPIC_API_KEY=...
 node patterns/loop-with-guard/impl.mjs
 ```
-
-`tool-grounded-review` ships with its own tests: `node --test patterns/tool-grounded-review/impl.test.mjs`.
 
 ---
 
@@ -80,7 +98,7 @@ patterns/
     └── impl.mjs      minimal working implementation (~50-100 lines)
 ```
 
-The line budget is a target, not a cap. Where the guards *are* the pattern, the implementation keeps them rather than hiding them: `loop-with-guard` (~130 lines: strict verdict parsing, reviewer-side repair, three escalation paths), `speculative-race` (~110 lines: per-strategy deadlines and failure filtering) and `tool-grounded-review` (~200 lines: both variants, a fail-closed gate with flaky and removed-script detection, isolated env and HOME, symlink-safe reads) run longer on purpose.
+The line budget is a target, not a cap. Where the guards *are* the pattern, the implementation keeps them rather than hiding them: `loop-with-guard` (~130 lines: strict verdict parsing, reviewer-side repair, three escalation paths), `speculative-race` (~110 lines: per-strategy deadlines and failure filtering), `staged-prompt-separation` (~200 lines) and `tool-grounded-review` (~200 lines: both variants, a fail-closed gate with flaky and removed-script detection, isolated env and HOME, symlink-safe reads) run longer on purpose.
 
 ---
 
