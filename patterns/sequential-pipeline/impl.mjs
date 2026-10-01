@@ -2,15 +2,28 @@ import Anthropic from "@anthropic-ai/sdk";
 
 const client = new Anthropic();
 
+// Opus 5.5 always thinks, so find the text block by type. Anything but end_turn
+// (refusal, max_tokens) is not a usable answer.
+function readText(response) {
+  if (response.stop_reason !== "end_turn") throw new Error(`no usable answer (stop_reason: ${response.stop_reason})`);
+  return response.content.find((b) => b.type === "text")?.text ?? "";
+}
+
 async function runAgent(name, systemPrompt, userPrompt) {
   console.log(`\n[${name}] Running...`);
   const response = await client.messages.create({
-    model: "claude-sonnet-4-6",
-    max_tokens: 1024,
+    model: "claude-opus-5-5",
+    max_tokens: 16000, // thinking counts toward it
+    output_config: { effort: "medium" }, // explicit: defaults differ between models
     system: systemPrompt,
     messages: [{ role: "user", content: userPrompt }],
   });
-  const output = response.content[0].text;
+  // A refusal maps onto the handoff contract: the stage is BLOCKED and the pipeline halts.
+  if (response.stop_reason === "refusal") {
+    console.log(`[${name}] Refused.`);
+    return "### Status\nBLOCKED\n### Handoff\nRequest refused by safety classifier.";
+  }
+  const output = readText(response);
   console.log(`[${name}] Done.`);
   return output;
 }
@@ -33,14 +46,14 @@ async function sequentialPipeline(issue) {
     `You are a ticket analyst. Break down the issue into a clear implementation plan. ${handoffContract}`,
     `Issue: ${issue}`
   );
-  if (isBlocked(analysis)) return { stage: "ticket-analyst", blocked: true };
+  if (isBlocked(analysis)) return { stage: "ticket-analyst", blocked: true, reason: parseHandoff(analysis) };
 
   const code = await runAgent(
     "code-builder",
     `You are a coding agent. Implement the plan provided. ${handoffContract}`,
     `Plan:\n${parseHandoff(analysis)}`
   );
-  if (isBlocked(code)) return { stage: "code-builder", blocked: true };
+  if (isBlocked(code)) return { stage: "code-builder", blocked: true, reason: parseHandoff(code) };
 
   const review = await runAgent(
     "code-reviewer",
@@ -48,6 +61,8 @@ async function sequentialPipeline(issue) {
       "End with:\n### Status\n[APPROVED|CHANGES_REQUESTED]\n### Handoff\n[verdict and summary]",
     `Implementation:\n${parseHandoff(code)}`
   );
+
+  if (isBlocked(review)) return { stage: "code-reviewer", blocked: true, reason: parseHandoff(review) };
 
   const approved = /###\s*Status\s*\nAPPROVED/i.test(review);
   return { stage: "code-reviewer", blocked: false, approved, output: review };
@@ -58,7 +73,7 @@ const result = await sequentialPipeline(
 );
 
 if (result.blocked) {
-  console.log(`\nPipeline halted at stage: ${result.stage}`);
+  console.log(`\nPipeline halted at stage: ${result.stage} — ${result.reason}`);
 } else {
   console.log(`\nPipeline complete — ${result.approved ? "APPROVED" : "CHANGES_REQUESTED"}`);
 }

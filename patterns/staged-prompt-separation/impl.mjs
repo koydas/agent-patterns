@@ -10,6 +10,13 @@ import Anthropic from "@anthropic-ai/sdk";
 
 const client = new Anthropic();
 
+// Opus 5.5 always thinks, so find the text block by type. Anything but end_turn
+// (refusal, max_tokens) is not a usable answer.
+function readText(response) {
+  if (response.stop_reason !== "end_turn") throw new Error(`no usable answer (stop_reason: ${response.stop_reason})`);
+  return response.content.find((b) => b.type === "text")?.text ?? "";
+}
+
 // --- Prompt loading ---
 
 function interpolate(template, vars) {
@@ -21,12 +28,13 @@ function interpolate(template, vars) {
 
 // --- LLM call with cached system prompt ---
 
-// claude-sonnet-4-6 has a 1024-token cacheable-prefix minimum (vs 2048 for Haiku).
-// The SYSTEM_PROMPT below exceeds 1024 tokens, so call 2 will show cache_read_input_tokens > 0.
+// claude-opus-5-5 has a 512-token cacheable-prefix minimum (4096 for Haiku 4.5).
+// The SYSTEM_PROMPT below exceeds it, so call 2 will show cache_read_input_tokens > 0.
 async function callWithCache(systemPrompt, userPrompt) {
   const response = await client.messages.create({
-    model: "claude-sonnet-4-6",
-    max_tokens: 512,
+    model: "claude-opus-5-5",
+    max_tokens: 16000, // thinking counts toward it
+    output_config: { effort: "medium" }, // explicit: defaults differ between models
     system: [
       {
         type: "text",
@@ -42,13 +50,13 @@ async function callWithCache(systemPrompt, userPrompt) {
     `[cache] input=${usage.input_tokens} cached=${usage.cache_read_input_tokens ?? 0} created=${usage.cache_creation_input_tokens ?? 0}`
   );
 
-  return response.content[0].text;
+  return readText(response);
 }
 
 // --- Inline prompt files (normally loaded from prompts/*.md) ---
 
 // System prompt must exceed the provider's cacheable-prefix minimum.
-// Anthropic requires ≥ 1024 tokens for Sonnet and ≥ 2048 for Haiku.
+// The minimum is model-dependent and not monotonic: 512 tokens for Opus 5.5, 4096 for Haiku 4.5.
 // This prompt is intentionally comprehensive — production reviewer prompts routinely
 // exceed 1500 tokens once guardrails, rubric, and examples are included.
 const SYSTEM_PROMPT = `

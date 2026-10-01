@@ -18,6 +18,7 @@ A classifier agent analyzes the input and dispatches to the appropriate speciali
 1. The **router** agent classifies the input into a known category (e.g. `BUG_FIX`, `FEATURE`, `REFACTOR`, `SECURITY`).
 2. The category determines which **specialist** agent receives the task.
 3. The specialist processes the task with a focused system prompt.
+4. Effort is allocated per role: the router runs at `low` effort with a small `max_tokens` (one word out); the specialist gets the budget at `medium`. Same model, one cache namespace — measure this before reaching for a cheaper classifier model.
 
 ## When to use
 
@@ -35,6 +36,7 @@ A classifier agent analyzes the input and dispatches to the appropriate speciali
 |---|---|
 | **Pro** | Each specialist is focused — smaller prompt, better results |
 | **Pro** | Easy to add specialists without touching existing ones |
+| **Pro** | Routing cost stays small next to the specialist call when the router runs at low effort |
 | **Con** | Misclassification silently sends the task to the wrong agent |
 | **Con** | Tasks that span categories require either multi-label routing or a fallback generalist |
 

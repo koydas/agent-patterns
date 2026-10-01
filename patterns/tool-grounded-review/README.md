@@ -7,10 +7,12 @@ flowchart TD
     Context --> Reviewer[Reviewer agent]
     Tools --> Evidence[(Evidence\nPASS / FAIL / UNVERIFIED)]
     Evidence --> Reviewer
-    Reviewer --> Gate{Any check FAIL?}
-    Gate -- yes --> Changes([REQUEST_CHANGES\n+ failure output])
-    Gate -- no --> Verdict([LLM verdict])
+    Reviewer --> Gate{Evidence}
+    Gate -- any FAIL --> Changes([REQUEST_CHANGES\n+ failure output])
+    Gate -- any UNVERIFIED --> Policy([Blocked or surfaced\nper policy])
+    Gate -- all PASS / N/A --> Verdict([LLM verdict])
     Changes --> Human([Human gate])
+    Policy --> Human
     Verdict --> Human
 ```
 
@@ -79,14 +81,26 @@ Start with **A**. Move to **B** when reviews are missing context the fixed list 
 
 **[`ai-dev-tools`](https://github.com/koydas/ai-dev-tools)** — closer to variant B ([ADR-009](https://github.com/koydas/ai-dev-tools/blob/main/docs/adr/ADR-009-tool-grounded-review.md))
 - `pr-analyst` and `code-reviewer` run inside Claude Code: they gather context, discover check commands from the repo, run them, and re-execute builder evidence (`### Reproduction`, `### Non-regression evidence`).
-- A mandatory Evidence table gates `DONE`: every row must be `PASS` or `N/A`; `NOT_RUN` halts for the human.
+- A mandatory Evidence table gates `DONE`: every row must be `PASS`, `N/A` or `PRE_EXISTING` (a failure proven on the base branch's CI run); `NOT_RUN` halts for the human.
 - Checks run only if the working tree already reflects the change — the agent never checks out or resets on its own.
 
 ## Reference implementation
 
-[`impl.mjs`](./impl.mjs) — both variants on a local git repo:
+[`impl.mjs`](./impl.mjs) — both variants on a local git repo, reviewing `git diff <base>`:
 
 ```bash
-node impl.mjs <repo-path>           # variant A: pushed evidence
-node impl.mjs <repo-path> --loop    # variant B: bounded tool-use loop
+node impl.mjs <repo-path>                    # variant A: pushed evidence (base defaults to HEAD~1)
+node impl.mjs <repo-path> --loop             # variant B: bounded tool-use loop
+node impl.mjs <repo-path> --base=origin/main # review a branch against its base
+node --test impl.test.mjs                    # the gate: verdict parsing and evidence policy
 ```
+
+What it implements from the failure modes above:
+- **Gate in code, fail closed** — any `FAIL` *or* `UNVERIFIED` declared check blocks approval, including a check that never ran; `N/A` (the repo does not declare that script) does not. The verdict must be a strict JSON object; anything else is not an approval.
+- **No credential exposure** — checks run with an allowlisted env (`PATH`, `HOME`, `CI`), never the reviewer's API key.
+- **Confined reads** — `read_file` resolves symlinks (`realpath`) before the repo-root check.
+- **Untrusted data** — diff, file contents and check output are fenced in tags the system prompt marks as data.
+
+Variant A gathers context only from a root `CLAUDE.md` / `AGENTS.md`; variant B reads what it needs.
+
+**Does not cover** (handle these before relying on it): checks and their config run from the reviewed tree (*self-neutering checks* — read them from the base ref); evidence is not bound to a commit SHA (*stale evidence*); checks run on the host, isolated only by env (run them in a container without secrets).
