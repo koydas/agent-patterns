@@ -1,0 +1,77 @@
+{%- assign slug = page.dir | split: "/" | last -%}
+{%- assign meta = site.data.patterns[slug] -%}
+{%- if meta -%}
+  {%- assign page_title = meta.title | append: " | " | append: site.title -%}
+  {%- assign page_description = meta.description -%}
+{%- else -%}
+  {%- assign page_title = site.title | append: " — multi-agent LLM patterns indexed by the problem they solve" -%}
+  {%- assign page_description = site.description | strip -%}
+{%- endif -%}
+{%- assign canonical = page.url | replace: "index.html", "" | absolute_url -%}
+<!doctype html>
+<html lang="{{ site.lang }}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ page_title | escape }}</title>
+  <meta name="description" content="{{ page_description | escape }}">
+  <link rel="canonical" href="{{ canonical }}">
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="{{ site.title }}">
+  <meta property="og:title" content="{{ page_title | escape }}">
+  <meta property="og:description" content="{{ page_description | escape }}">
+  <meta property="og:url" content="{{ canonical }}">
+  <meta name="twitter:card" content="summary">
+  <style>
+    :root { --fg: #1f2328; --muted: #59636e; --bg: #ffffff; --line: #d1d9e0; --code: #f6f8fa; --link: #0969da; }
+    @media (prefers-color-scheme: dark) {
+      :root { --fg: #e6edf3; --muted: #9198a1; --bg: #0d1117; --line: #3d444d; --code: #151b23; --link: #4493f8; }
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--bg); color: var(--fg); font: 16px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; }
+    header, main, footer { max-width: 920px; margin: 0 auto; padding: 0 16px; }
+    header { display: flex; gap: 16px; align-items: baseline; justify-content: space-between; padding-top: 16px; padding-bottom: 8px; border-bottom: 1px solid var(--line); }
+    header a { color: var(--fg); font-weight: 600; text-decoration: none; }
+    header nav a { color: var(--link); font-weight: 400; margin-left: 16px; }
+    a { color: var(--link); }
+    h1, h2, h3 { line-height: 1.25; margin-top: 1.6em; }
+    h2 { border-bottom: 1px solid var(--line); padding-bottom: .3em; }
+    code { background: var(--code); padding: .15em .35em; border-radius: 4px; font-size: 85%; }
+    pre { background: var(--code); padding: 16px; border-radius: 6px; overflow-x: auto; }
+    pre code { background: none; padding: 0; font-size: 85%; }
+    table { border-collapse: collapse; display: block; overflow-x: auto; margin: 1em 0; }
+    th, td { border: 1px solid var(--line); padding: 6px 12px; text-align: left; vertical-align: top; }
+    .mermaid { background: var(--bg); text-align: center; margin: 1em 0; }
+    footer { color: var(--muted); font-size: 14px; border-top: 1px solid var(--line); margin-top: 48px; padding-top: 16px; padding-bottom: 32px; }
+  </style>
+</head>
+<body>
+  <header>
+    <a href="{{ '/' | relative_url }}">{{ site.title }}</a>
+    <nav><a href="https://github.com/{{ site.repository }}">GitHub ★</a></nav>
+  </header>
+  <main>
+{{ content }}
+  </main>
+  <footer>
+    <a href="https://github.com/{{ site.repository }}">{{ site.repository }}</a> · MIT ·
+    patterns from <a href="https://github.com/koydas/autonomous-dev-loop">autonomous-dev-loop</a> and <a href="https://github.com/koydas/ai-dev-tools">ai-dev-tools</a>
+  </footer>
+  <script type="module">
+    const blocks = document.querySelectorAll("code.language-mermaid, div.language-mermaid code");
+    if (blocks.length) {
+      for (const code of blocks) {
+        const host = code.closest("div.language-mermaid") || code.closest("pre") || code;
+        const div = document.createElement("div");
+        div.className = "mermaid";
+        div.textContent = code.textContent;
+        host.replaceWith(div);
+      }
+      const { default: mermaid } = await import("https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.esm.min.mjs");
+      const dark = matchMedia("(prefers-color-scheme: dark)").matches;
+      mermaid.initialize({ startOnLoad: false, theme: dark ? "dark" : "default" });
+      await mermaid.run({ querySelector: ".mermaid" });
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,46 @@
+# Page title and meta description per pattern (search results, link previews).
+sequential-pipeline:
+  title: Sequential pipeline pattern for multi-agent LLM systems
+  description: Chain agents through typed contracts instead of prose, so a failure mid-chain stops the pipeline instead of going unnoticed. Diagram, trade-offs, failure modes and runnable code.
+router:
+  title: Router pattern — dispatch LLM tasks to specialist agents
+  description: A low-effort classifier agent routes each task to a specialist (bug fix, feature, refactor, security) instead of one generalist prompt handling everything badly. Trade-offs and runnable code.
+label-driven-state-machine:
+  title: Label-driven state machine for async AI agent workflows
+  description: Use GitHub labels as the state and transitions of a multi-workflow agent pipeline, with retries by label re-pulse. Diagram, failure modes and an offline simulation.
+fan-out:
+  title: Fan-out pattern — run independent agent subtasks in parallel
+  description: Split independent subtasks across parallel LLM workers and merge the results. When it helps, when it does not, and a runnable reference implementation.
+speculative-race:
+  title: Speculative race — run competing agent strategies, keep the first good one
+  description: When the best fix strategy is unknown upfront, run several in parallel with per-strategy deadlines and keep the first valid result. Trade-offs and runnable code.
+validator-first:
+  title: Validator-first gate for AI code generation
+  description: Validate an issue before any code is generated, so under-specified tickets stop early instead of burning tokens and producing garbage pull requests. Runnable code.
+loop-with-guard:
+  title: Loop with guard — bound the LLM coder/reviewer loop
+  description: Cap the coder/reviewer auto-fix loop, parse verdicts strictly and escalate to a human, born from an auto-fix agent that replaced a 26-test suite with an 18-line stub. Runnable code.
+tool-grounded-review:
+  title: Tool-grounded review — LLM code review backed by executed checks
+  description: Make the AI reviewer run the repository's tests, lint and type-check, and force REQUEST_CHANGES when a check fails, so it can never approve a red PR. Fail-closed gate with tests.
+critic-pair:
+  title: Critic pair — adversarial agent that tries to break a patch
+  description: Pair the builder agent with a challenger whose only job is to break the patch before review, catching edge cases a single-pass reviewer misses. Trade-offs and runnable code.
+ac-traceability:
+  title: Acceptance-criteria traceability for AI-generated code
+  description: The builder agent emits a machine-checkable coverage block where every acceptance criterion is either mapped to a code location or explicitly excluded with a reason. Runnable code.
+typed-evidence-chain:
+  title: Typed evidence chain — make AI bug fixes prove the bug
+  description: Typed builders per change kind; a bug fix must ship a reproduction test that fails before the fix, a refactor must show non-regression. Trade-offs and runnable code.
+human-gate:
+  title: Human gate — keep a person at the irreversible step of an agent pipeline
+  description: Agents propose, a human merges or deploys. Where to put the gate in an autonomous coding pipeline, what it costs, and how to enforce it in code rather than in a prompt.
+checkpoint-resume:
+  title: Checkpoint and resume for long-running LLM agent pipelines
+  description: Persist each step's output so a rate limit or crash at step 4 resumes there instead of restarting the whole pipeline. Implementations for GitHub Actions and Claude Code.
+staged-prompt-separation:
+  title: Staged prompt separation — cacheable system prompts for LLM agents
+  description: Split invariant system prompts from per-call user prompts so the prefix is cached and a guardrail change is a prompt edit, not a code change. Demonstrates a prompt-cache hit.
+reflexive-loop:
+  title: Reflexive loop — stop agents repeating the same review mistakes
+  description: Encode rules extracted from human review feedback into CLAUDE.md or prompt files, loaded on every run, so the same nit does not return on every PR. Reference implementation.

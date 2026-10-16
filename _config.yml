@@ -1,0 +1,29 @@
+# GitHub Pages (Jekyll) site: every README.md becomes an indexable page.
+# Enable once: Settings → Pages → Deploy from a branch → main, / (root).
+title: agent-patterns
+description: >-
+  15 multi-agent LLM patterns indexed by the problem they solve — diagram,
+  trade-offs, failure modes, when not to use it, and a runnable impl.mjs.
+  12 are used in production pipelines.
+url: https://koydas.github.io
+baseurl: /agent-patterns
+repository: koydas/agent-patterns
+lang: en
+
+plugins:
+  - jekyll-sitemap
+  - jekyll-relative-links
+  - jekyll-readme-index
+  - jekyll-optional-front-matter
+
+relative_links:
+  enabled: true
+  collections: false
+
+defaults:
+  - scope: { path: "" }
+    values: { layout: default }
+
+exclude:
+  - CLAUDE.md
+  - "**/*.test.mjs"
