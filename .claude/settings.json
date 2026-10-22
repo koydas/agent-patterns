@@ -1,0 +1,10 @@
+{
+  "extraKnownMarketplaces": {
+    "ai-dev-tools": {
+      "source": { "source": "github", "repo": "koydas/ai-dev-tools" }
+    }
+  },
+  "enabledPlugins": {
+    "ai-dev-tools@ai-dev-tools": true
+  }
+}
