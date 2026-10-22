@@ -44,3 +44,6 @@ staged-prompt-separation:
 reflexive-loop:
   title: Reflexive loop — stop agents repeating the same review mistakes
   description: Encode rules extracted from human review feedback into CLAUDE.md or prompt files, loaded on every run, so the same nit does not return on every PR. Reference implementation.
+read-only-meta-loop:
+  title: Read-only meta-loop — suggest changes to a pipeline without writing to it
+  description: Turn a pipeline's own diagnostic findings into suggested levers through a fixed table, creating no issue, PR or comment that the pipeline would react to. Boundary, failure modes and offline runnable code with tests. Reference implementation.

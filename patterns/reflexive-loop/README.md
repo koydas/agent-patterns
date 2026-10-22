@@ -32,6 +32,8 @@ Reference implementation only (`impl.mjs`). Neither repo runs an automated learn
 - `prompts/*.md` files loaded at runtime are the injection point for learned rules.
 - Each `REQUEST_CHANGES → fix` cycle in the 3-iteration auto-fix loop is a capturable feedback signal.
 
+See also [read-only-meta-loop](../read-only-meta-loop/): the read-only counterpart, which suggests where to change a pipeline from its own statistics and writes nothing.
+
 ## When to use
 
 - Pipelines that run repeatedly on similar tasks where the same feedback recurs across runs.
