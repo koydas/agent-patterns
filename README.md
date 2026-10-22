@@ -1,8 +1,8 @@
 # agent-patterns
 
-**15 patterns for multi-agent systems — each with a diagram, trade-offs, failure modes, when *not* to use it, and a runnable `impl.mjs`.**
+**16 patterns for multi-agent systems — each with a diagram, trade-offs, failure modes, when *not* to use it, and a runnable `impl.mjs`.**
 
-Not a framework. Every pattern here was named after the problem it solved in a pipeline that runs: 12 of 15 are used in two public repos, [`autonomous-dev-loop`](https://github.com/koydas/autonomous-dev-loop) (GitHub Actions, headless) and [`ai-dev-tools`](https://github.com/koydas/ai-dev-tools) (Claude Code, interactive), and every row names where. The other 3 are marked as reference implementations. 9 patterns also have a **Where it came from** section linking the incident or ADR that forced them — for example, `loop-with-guard` exists because an auto-fix agent replaced a 26-test suite with an 18-line stub.
+Not a framework. Every pattern here was named after the problem it solved in a pipeline that runs: 12 of 16 are used in two public repos, [`autonomous-dev-loop`](https://github.com/koydas/autonomous-dev-loop) (GitHub Actions, headless) and [`ai-dev-tools`](https://github.com/koydas/ai-dev-tools) (Claude Code, interactive), and every row names where. The other 4 are marked as reference implementations. 10 patterns also have a **Where it came from** section linking the incident or ADR that forced them — for example, `loop-with-guard` exists because an auto-fix agent replaced a 26-test suite with an 18-line stub.
 
 Try one without an API key: `node --test patterns/tool-grounded-review/impl.test.mjs` (11 tests), or see [Run one](#run-one).
 
@@ -52,16 +52,18 @@ Labels carry the state between those workflows: that's [label-driven-state-machi
 | A rate limit at step 4 restarts the whole pipeline | [checkpoint-resume](./patterns/checkpoint-resume/) | [`autonomous-dev-loop`](https://github.com/koydas/autonomous-dev-loop) — checkpoints as Actions artifacts; [`ai-dev-tools`](https://github.com/koydas/ai-dev-tools) — `checkpoint.mjs` + `/resume` |
 | The invariant system prompt is re-billed on every call; changing a guardrail needs a code change | [staged-prompt-separation](./patterns/staged-prompt-separation/) | [`autonomous-dev-loop`](https://github.com/koydas/autonomous-dev-loop) — `*-system.md` / `*-user.md` pairs, prompt caching on the Anthropic provider path |
 | The same review nit comes back on every PR | [reflexive-loop](./patterns/reflexive-loop/) | Reference only — injection points exist, no automated learn step yet |
+| You want the pipeline to tell you what to change in itself, but anything it creates (an issue, a PR) comes back in as input | [read-only-meta-loop](./patterns/read-only-meta-loop/) | Reference only — designed in [`autonomous-dev-loop` ADR-0046](https://github.com/koydas/autonomous-dev-loop/blob/main/docs/adr/0046-meta-loop-read-only-stats-to-levers.md) / [ADR-0047](https://github.com/koydas/autonomous-dev-loop/blob/main/docs/adr/0047-findings-export-and-lever-table.md) and [`ai-dev-tools` ADR-017](https://github.com/koydas/ai-dev-tools/blob/main/docs/adr/ADR-017-loop-insights-command.md), not implemented yet |
 
 ## Run one
 
-Three patterns run offline, no API key:
+Four patterns run offline, no API key:
 
 ```bash
 git clone https://github.com/koydas/agent-patterns && cd agent-patterns
 node patterns/label-driven-state-machine/impl.mjs   # simulated GitHub label events
 node patterns/fan-out/impl.mjs
 node patterns/speculative-race/impl.mjs
+node patterns/read-only-meta-loop/impl.mjs         # sample findings → suggested levers, writes nothing
 ```
 
 The others call the Claude API:
@@ -72,7 +74,7 @@ export ANTHROPIC_API_KEY=...
 node patterns/loop-with-guard/impl.mjs
 ```
 
-`tool-grounded-review` ships with its own tests: `node --test patterns/tool-grounded-review/impl.test.mjs`.
+`tool-grounded-review` and `read-only-meta-loop` ship with their own tests: `node --test patterns/tool-grounded-review/impl.test.mjs patterns/read-only-meta-loop/impl.test.mjs`.
 
 ---
 
