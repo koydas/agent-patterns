@@ -62,8 +62,8 @@ test("the shipped table satisfies its own invariants", () => {
   assert.doesNotThrow(() => validateTable());
 });
 
-test("a lever may not name a workflow, a threshold, a dataset, the protected list or an attempt cap", () => {
-  for (const ref of [".github/workflows/pr-review.yml", "config/evals.yaml#min_verdict_threshold", "evals/datasets/review.jsonl", "config/protected-paths.yaml", "config/models.yaml#max_attempts"]) {
+test("a lever may not name a workflow, agent config or instructions, a threshold, a dataset, the protected list or an attempt cap", () => {
+  for (const ref of [".github/workflows/pr-review.yml", ".claude/settings.json", "CLAUDE.md", "services/api/AGENTS.md", "docs/claude.md", "config/evals.yaml#min_verdict_threshold", "evals/datasets/review.jsonl", "config/protected-paths.yaml", "config/models.yaml#max_attempts"]) {
     assert.throws(() => validateTable({ x: { stage: "s", summary: "", targets: [{ ref, gate: null }] } }, {}), /forbidden target/, ref);
   }
 });

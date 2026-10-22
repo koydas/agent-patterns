@@ -18,7 +18,7 @@ A pipeline reads its own statistics and suggests where to change itself — and 
 1. The pipeline publishes its diagnostic findings as a versioned document (`schema_version`, a stable `key` per finding, `status` active or resolved, `fact`, optional `hypothesis`).
 2. A **fixed table** maps a rule id to the setting or prompt that governs it, with, for each target, the eval suite that measures a change to it (or none).
 3. A finding yields a lever only if it is **active**, of severity **warning or critical**, and from a **mapped** rule. Resolved findings, guardrails doing their job (`info`) and unmapped rules are listed under *not proposed*, each with its reason.
-4. The table **may not name** the gates or the loop's own boundary: workflow files, agent config, eval thresholds and datasets, the protected-paths list, attempt caps. A test fails if it does.
+4. The table **may not name** the gates or the loop's own boundary: workflow files, agent config and instruction files (`.claude/`, `CLAUDE.md`, `AGENTS.md`), eval thresholds and datasets, the protected-paths list, attempt caps. A test fails if it does.
 5. Every lever carries `verified: false`. It says where to look, not what the cause is.
 6. Feedback needs no state: the finding turns `resolved` when the pattern leaves the recent window.
 

@@ -13,9 +13,9 @@ import { fileURLToPath } from "node:url";
 
 export const SUPPORTED_VERSION = 1;
 
-// Targets a lever may never name: workflow files, agent config, eval thresholds and datasets, the
-// protected-paths list, attempt caps. Suggesting a weaker gate is how a meta-loop erodes the loop.
-const FORBIDDEN = [/^\.github\//, /^\.claude\//, /threshold/i, /^evals\/datasets\//, /protected-paths/, /attempt/i];
+// Targets a lever may never name: workflow files, agent config and instruction files (.claude/, CLAUDE.md,
+// AGENTS.md at any depth), eval thresholds and datasets, the protected-paths list, attempt caps. Suggesting a weaker gate is how a meta-loop erodes the loop.
+const FORBIDDEN = [/^\.github\//, /^\.claude\//, /(^|\/)(CLAUDE|AGENTS)\.md$/i, /threshold/i, /^evals\/datasets\//, /protected-paths/, /attempt/i];
 
 // rule id -> where to look. `gate`: the eval suite that measures a change to that target, or null.
 export const LEVERS = Object.freeze({
