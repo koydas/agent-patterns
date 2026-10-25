@@ -1,6 +1,6 @@
 # CLAUDE.md — agent-patterns
 
-15 multi-agent patterns, each `patterns/<name>/{README.md,impl.mjs}` (ESM, Node ≥ 20). Reference: `README.md` → Structure, Production notes.
+17 multi-agent patterns, each `patterns/<name>/{README.md,impl.mjs}` (ESM, Node ≥ 20). Reference: `README.md` → Structure, Production notes.
 
 - Implementations stay minimal (~50–100 lines) unless the guards are the pattern.
 - Offline-runnable patterns need no API key; others target `claude-opus-5-5`.
