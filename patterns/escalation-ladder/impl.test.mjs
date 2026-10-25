@@ -18,6 +18,12 @@ test("checkModelAnswer: a union passes; invented lines, markers and non-strings 
   assert.equal(checkModelAnswer(real, "- theirs\n- ours\n- one new\n"), null, "one combined line is tolerated");
   assert.equal(checkModelAnswer(real, "- theirs\n- new 1\n- new 2\n"), "invented_content");
   assert.equal(checkModelAnswer(real, "<<<<<<< HEAD\n- ours\n"), "marker_left");
+  // The separator and the diff3 base marker alone, with the default allowance of one invented line.
+  assert.equal(checkModelAnswer(real, "- ours\n=======\n"), "marker_left");
+  assert.equal(checkModelAnswer(real, "- ours\n||||||| base\n"), "marker_left");
+  // ...unless a side already had that line (a setext heading), which is not the model adding a marker.
+  const heading = { ours: "Title\n=======\n", base: "Title\n=======\n", theirs: "Title2\n=======\n" };
+  assert.equal(checkModelAnswer(heading, "Title2\n=======\n"), null);
   assert.equal(checkModelAnswer(real, 42), "malformed");
   assert.equal(checkModelAnswer(real, "- new 1\n- new 2\n", { maxInvented: 2 }), null);
 });

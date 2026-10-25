@@ -11,6 +11,9 @@ import { createHash } from "node:crypto";
 import { fileURLToPath } from "node:url";
 
 const MARKER = /^(<{7}|>{7})/m;
+// A bare separator (`=======`) or diff3 base marker (`|||||||`) is a marker only when no side contains it: a Markdown
+// setext heading is made of `=======`, but a model cannot add one that none of the sides had.
+const SEPARATOR = /^(={7}|\|{7})(?: .*)?$/;
 const lines = (t) => String(t).split("\n").map((l) => l.trim()).filter(Boolean);
 
 /** Rung 1: no model. `null` when the hunk is a real conflict. */
@@ -25,6 +28,8 @@ export function deterministic({ ours, base, theirs }) {
 export function checkModelAnswer(hunk, answer, { maxInvented = 1 } = {}) {
   if (typeof answer !== "string") return "malformed";
   if (MARKER.test(answer)) return "marker_left";
+  const sides = new Set([hunk.ours, hunk.base, hunk.theirs].flatMap((t) => String(t).split("\n")));
+  if (answer.split("\n").some((l) => SEPARATOR.test(l) && !sides.has(l))) return "marker_left";
   const known = new Set([...lines(hunk.ours), ...lines(hunk.base), ...lines(hunk.theirs)]);
   return lines(answer).filter((l) => !known.has(l)).length > maxInvented ? "invented_content" : null;
 }
