@@ -1,8 +1,8 @@
 # agent-patterns
 
-**16 patterns for multi-agent systems — each with a diagram, trade-offs, failure modes, when *not* to use it, and a runnable `impl.mjs`.**
+**17 patterns for multi-agent systems — each with a diagram, trade-offs, failure modes, when *not* to use it, and a runnable `impl.mjs`.**
 
-Not a framework. Every pattern here was named after the problem it solved in a pipeline that runs: 12 of 16 are used in two public repos, [`autonomous-dev-loop`](https://github.com/koydas/autonomous-dev-loop) (GitHub Actions, headless) and [`ai-dev-tools`](https://github.com/koydas/ai-dev-tools) (Claude Code, interactive), and every row names where. The other 4 are marked as reference implementations. 10 patterns also have a **Where it came from** section linking the incident or ADR that forced them — for example, `loop-with-guard` exists because an auto-fix agent replaced a 26-test suite with an 18-line stub.
+Not a framework. Every pattern here was named after the problem it solved in a pipeline that runs: 12 of 17 are used in two public repos, [`autonomous-dev-loop`](https://github.com/koydas/autonomous-dev-loop) (GitHub Actions, headless) and [`ai-dev-tools`](https://github.com/koydas/ai-dev-tools) (Claude Code, interactive), and every row names where. The other 5 are marked as reference implementations. 11 patterns also have a **Where it came from** section linking the incident or ADR that forced them — for example, `loop-with-guard` exists because an auto-fix agent replaced a 26-test suite with an 18-line stub.
 
 Try one without an API key: `node --test patterns/tool-grounded-review/impl.test.mjs` (11 tests), or see [Run one](#run-one).
 
@@ -30,6 +30,7 @@ Labels carry the state between those workflows: that's [label-driven-state-machi
 | Agents hand each other prose instead of contracts; a failure mid-chain goes unnoticed | [sequential-pipeline](./patterns/sequential-pipeline/) | [`ai-dev-tools`](https://github.com/koydas/ai-dev-tools) — `ticket-analyst → code-builder → code-reviewer` |
 | One generalist prompt handles bug fixes, features and refactors equally badly | [router](./patterns/router/) | [`ai-dev-tools`](https://github.com/koydas/ai-dev-tools) — `issue-router` agent |
 | Pipeline state across async workflows is invisible and hard to pass along | [label-driven-state-machine](./patterns/label-driven-state-machine/) | [`autonomous-dev-loop`](https://github.com/koydas/autonomous-dev-loop) — four workflows chained by labels, retries by label re-pulse |
+| A failure class is mostly structural, but a model fixes it and sometimes rewrites what it should not | [escalation-ladder](./patterns/escalation-ladder/) | Reference only — designed and implemented in [`autonomous-dev-loop` PR #294](https://github.com/koydas/autonomous-dev-loop/pull/294) (conflicts-fix), not merged yet |
 | Independent subtasks run one after another | [fan-out](./patterns/fan-out/) | Reference only (mocked workers) |
 | The best fix strategy is unknown upfront | [speculative-race](./patterns/speculative-race/) | Reference only (mocked selector) |
 
@@ -56,7 +57,7 @@ Labels carry the state between those workflows: that's [label-driven-state-machi
 
 ## Run one
 
-Four patterns run offline, no API key:
+Five patterns run offline, no API key:
 
 ```bash
 git clone https://github.com/koydas/agent-patterns && cd agent-patterns
@@ -64,6 +65,7 @@ node patterns/label-driven-state-machine/impl.mjs   # simulated GitHub label eve
 node patterns/fan-out/impl.mjs
 node patterns/speculative-race/impl.mjs
 node patterns/read-only-meta-loop/impl.mjs         # sample findings → suggested levers, writes nothing
+node patterns/escalation-ladder/impl.mjs           # deterministic rungs, then a stubbed model with a post-check, then a human
 ```
 
 The others call the Claude API:
@@ -74,7 +76,7 @@ export ANTHROPIC_API_KEY=...
 node patterns/loop-with-guard/impl.mjs
 ```
 
-`tool-grounded-review` and `read-only-meta-loop` ship with their own tests: `node --test patterns/tool-grounded-review/impl.test.mjs patterns/read-only-meta-loop/impl.test.mjs`.
+`tool-grounded-review`, `read-only-meta-loop` and `escalation-ladder` ship with their own tests: `node --test patterns/tool-grounded-review/impl.test.mjs patterns/read-only-meta-loop/impl.test.mjs patterns/escalation-ladder/impl.test.mjs`.
 
 ---
 
