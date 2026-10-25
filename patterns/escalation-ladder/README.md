@@ -29,7 +29,7 @@ Try the cheapest, exact mechanism first; give the model only what is left, over 
 
 ## Where it came from
 
-- **A conflicting PR was invisible to the loop.** `pull_request` events run on the merge ref, which does not exist while a PR conflicts, so review, CI and auto-fix went silent. The fix in `autonomous-dev-loop` is this ladder: clean merge → regenerated lockfile → model resolves hunks with per-resolver post-checks → `needs-human`, guards checked against both sides, the ADR number renumbered by code rather than by the model. → [autonomous-dev-loop#294](https://github.com/koydas/autonomous-dev-loop/pull/294) (open at the time of writing; ADR-0058 in that PR)
+- **A conflicting PR was invisible to the loop.** `pull_request` events run on the merge ref, which does not exist while a PR conflicts, so review, CI and auto-fix went silent. The fix in `autonomous-dev-loop` is this ladder: clean merge → regenerated lockfile → model resolves hunks with per-resolver post-checks → `needs-human`, guards checked against both sides, the ADR number renumbered by code rather than by the model. → [autonomous-dev-loop#294](https://github.com/koydas/autonomous-dev-loop/pull/294) (open at the time of writing; ADR-0059 in that PR)
 
 ## When to use
 
