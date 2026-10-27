@@ -16,7 +16,7 @@ A failing evaluation must be fixed by improving the stage, not by making the eva
 
 ## How it works
 
-1. Pin the bounds and optional flags of gated metrics, along with case IDs, labels, input hashes, and a minimum gated case count.
+1. Pin the bounds and optional flags of gated metrics, along with case IDs, labels, and input hashes.
 2. Reject lower minimums, higher maximums, newly optional metrics, removed cases, or rewritten cases.
 3. Ensure CI cannot silently run only selected tags or a limited subset.
 4. Fix red evaluations in the stage's prompt, parser, or production code; rerun the full suite.

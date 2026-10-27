@@ -60,9 +60,6 @@ Labels carry the state between those workflows: that's [label-driven-state-machi
 
 ## Run one
 
-New offline examples: `node --test patterns/bounded-feedback-injection/impl.test.mjs patterns/stateful-upgrade-verification/impl.test.mjs patterns/eval-gate-ratchet/impl.test.mjs`.
-
-
 Five patterns run offline, no API key:
 
 ```bash
@@ -83,6 +80,8 @@ node patterns/loop-with-guard/impl.mjs
 ```
 
 `tool-grounded-review`, `read-only-meta-loop` and `escalation-ladder` ship with their own tests: `node --test patterns/tool-grounded-review/impl.test.mjs patterns/read-only-meta-loop/impl.test.mjs patterns/escalation-ladder/impl.test.mjs`.
+
+`bounded-feedback-injection`, `stateful-upgrade-verification` and `eval-gate-ratchet` are pure offline functions with no CLI entry point, exercised by tests only: `node --test patterns/bounded-feedback-injection/impl.test.mjs patterns/stateful-upgrade-verification/impl.test.mjs patterns/eval-gate-ratchet/impl.test.mjs`.
 
 ---
 
