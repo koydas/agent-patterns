@@ -21,3 +21,8 @@ test("never modifies the event stream", () => {
   const items = Object.freeze([Object.freeze(signal("module_system")), Object.freeze(signal("module_system"))]);
   assert.equal(selectLessons(items, { now }).length, 1);
 });
+test("zero budgets select nothing", () => {
+  const items = [signal("module_system"), signal("module_system")];
+  assert.deepEqual(selectLessons(items, { now, maxLessons: 0 }), []);
+  assert.deepEqual(selectLessons(items, { now, window: 0 }), []);
+});

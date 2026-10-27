@@ -6,7 +6,7 @@ export const LESSONS = Object.freeze({
 });
 export function selectLessons(signals, { now = Date.now(), window = 30, maxAgeDays = 30, minOccurrences = 2, maxLessons = 3, maxChars = 700, catalog = LESSONS } = {}) {
   const cutoff = now - maxAgeDays * 86400000;
-  const recent = signals.filter(s => s && Number.isFinite(s.ts) && s.ts >= cutoff && s.ts <= now && Object.hasOwn(catalog, s.id)).slice(-window);
+  const recent = window <= 0 || maxLessons <= 0 ? [] : signals.filter(s => s && Number.isFinite(s.ts) && s.ts >= cutoff && s.ts <= now && Object.hasOwn(catalog, s.id)).slice(-window);
   const counts = new Map();
   for (const { id } of recent) counts.set(id, (counts.get(id) ?? 0) + 1);
   const ranked = [...counts].filter(([, n]) => n >= minOccurrences).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));

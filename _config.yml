@@ -4,7 +4,7 @@ title: agent-patterns
 description: >-
   20 multi-agent LLM patterns indexed by the problem they solve — diagram,
   trade-offs, failure modes, when not to use it, and a runnable impl.mjs.
-  15 are used in production pipelines.
+  16 are used in production pipelines.
 url: https://koydas.github.io
 baseurl: /agent-patterns
 repository: koydas/agent-patterns

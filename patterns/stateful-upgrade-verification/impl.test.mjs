@@ -17,3 +17,9 @@ test("rejects dropped or changed probe data", () => {
 test("accepts an explicitly compatible in-place upgrade", () => {
   assert.equal(verifyUpgrade({ oldVersion: "16", newVersion: "17", oldState: state, canReadInPlace: true }).ok, true);
 });
+test("compares probe data structurally, ignoring key order", () => {
+  const reordered = verifyUpgrade({ oldVersion: "16", newVersion: "18", oldState: state, migration: () => ({ count: 4, customer: { name: "Ada", id: 1 } }) });
+  assert.equal(reordered.ok, true);
+  const withMap = { index: new Map([["a", 1]]) };
+  assert.equal(verifyUpgrade({ oldVersion: "16", newVersion: "18", oldState: withMap, migration: () => ({ index: new Map() }) }).reason, "data_mismatch");
+});
