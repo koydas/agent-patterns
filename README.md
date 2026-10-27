@@ -1,8 +1,8 @@
 # agent-patterns
 
-**17 patterns for multi-agent systems — each with a diagram, trade-offs, failure modes, when *not* to use it, and a runnable `impl.mjs`.**
+**19 patterns for multi-agent systems — each with a diagram, trade-offs, failure modes, when *not* to use it, and a runnable `impl.mjs`.**
 
-Not a framework. Every pattern here was named after the problem it solved in a pipeline that runs: 12 of 17 are used in two public repos, [`autonomous-dev-loop`](https://github.com/koydas/autonomous-dev-loop) (GitHub Actions, headless) and [`ai-dev-tools`](https://github.com/koydas/ai-dev-tools) (Claude Code, interactive), and every row names where. The other 5 are marked as reference implementations. 11 patterns also have a **Where it came from** section linking the incident or ADR that forced them — for example, `loop-with-guard` exists because an auto-fix agent replaced a 26-test suite with an 18-line stub.
+Not a framework. Every pattern here was named after the problem it solved in a pipeline that runs: 14 of 19 have implementations in public repos, [`autonomous-dev-loop`](https://github.com/koydas/autonomous-dev-loop) (GitHub Actions, headless) and [`ai-dev-tools`](https://github.com/koydas/ai-dev-tools) (Claude Code, interactive), and every row names where. The remaining patterns are marked as reference implementations. 11 patterns also have a **Where it came from** section linking the incident or ADR that forced them — for example, `loop-with-guard` exists because an auto-fix agent replaced a 26-test suite with an 18-line stub.
 
 Try one without an API key: `node --test patterns/tool-grounded-review/impl.test.mjs` (11 tests), or see [Run one](#run-one).
 
@@ -50,12 +50,21 @@ Labels carry the state between those workflows: that's [label-driven-state-machi
 
 | Your problem | Pattern | Running in |
 |---|---|---|
+| Recurring failures should improve the next prompt without feeding untrusted model text back as instructions | [bounded-feedback-injection](./patterns/bounded-feedback-injection/) | [`autonomous-dev-loop`](https://github.com/koydas/autonomous-dev-loop) — fixed lessons catalog and bounded prompt injection (ADR-0051) |
+| An automated upgrade passes on empty storage but breaks existing data | [stateful-upgrade-verification](./patterns/stateful-upgrade-verification/) | [`fullstack-pilot`](https://github.com/koydas/fullstack-pilot) — stateful database upgrade CI (general reliability, not agent-specific) |
+
+
+| Your problem | Pattern | Running in |
+|---|---|---|
 | A rate limit at step 4 restarts the whole pipeline | [checkpoint-resume](./patterns/checkpoint-resume/) | [`autonomous-dev-loop`](https://github.com/koydas/autonomous-dev-loop) — checkpoints as Actions artifacts; [`ai-dev-tools`](https://github.com/koydas/ai-dev-tools) — `checkpoint.mjs` + `/resume` |
 | The invariant system prompt is re-billed on every call; changing a guardrail needs a code change | [staged-prompt-separation](./patterns/staged-prompt-separation/) | [`autonomous-dev-loop`](https://github.com/koydas/autonomous-dev-loop) — `*-system.md` / `*-user.md` pairs, prompt caching on the Anthropic provider path |
 | The same review nit comes back on every PR | [reflexive-loop](./patterns/reflexive-loop/) | Reference only — injection points exist, no automated learn step yet |
 | You want the pipeline to tell you what to change in itself, but anything it creates (an issue, a PR) comes back in as input | [read-only-meta-loop](./patterns/read-only-meta-loop/) | Reference only — designed in [`autonomous-dev-loop` ADR-0046](https://github.com/koydas/autonomous-dev-loop/blob/main/docs/adr/0046-meta-loop-read-only-stats-to-levers.md) / [ADR-0047](https://github.com/koydas/autonomous-dev-loop/blob/main/docs/adr/0047-findings-export-and-lever-table.md) and [`ai-dev-tools` ADR-017](https://github.com/koydas/ai-dev-tools/blob/main/docs/adr/ADR-017-loop-insights-command.md), not implemented yet |
 
 ## Run one
+
+New offline examples: `node --test patterns/bounded-feedback-injection/impl.test.mjs patterns/stateful-upgrade-verification/impl.test.mjs`.
+
 
 Five patterns run offline, no API key:
 
