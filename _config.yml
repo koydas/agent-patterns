@@ -2,9 +2,9 @@
 # Enable once: Settings → Pages → Deploy from a branch → main, / (root).
 title: agent-patterns
 description: >-
-  17 multi-agent LLM patterns indexed by the problem they solve — diagram,
+  20 multi-agent LLM patterns indexed by the problem they solve — diagram,
   trade-offs, failure modes, when not to use it, and a runnable impl.mjs.
-  12 are used in production pipelines.
+  16 are used in production pipelines.
 url: https://koydas.github.io
 baseurl: /agent-patterns
 repository: koydas/agent-patterns

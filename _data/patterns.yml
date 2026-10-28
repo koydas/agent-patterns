@@ -46,7 +46,16 @@ reflexive-loop:
   description: Encode rules extracted from human review feedback into CLAUDE.md or prompt files, loaded on every run, so the same nit does not return on every PR. Reference implementation.
 read-only-meta-loop:
   title: Read-only meta-loop — suggest changes to a pipeline without writing to it
-  description: Turn a pipeline's own diagnostic findings into suggested levers through a fixed table, creating no issue, PR or comment that the pipeline would react to. Boundary, failure modes and offline runnable code with tests. Reference implementation.
+  description: Turn a pipeline's own diagnostic findings into suggested levers through a fixed table, creating no issue, PR or comment that the pipeline would react to. Boundary, failure modes and offline runnable code with tests. Implemented in autonomous-dev-loop and ai-dev-tools.
 escalation-ladder:
   title: Escalation ladder — deterministic first, model on the minimal unit, human last
   description: Resolve what code can resolve exactly, give the model only the smallest remaining unit with post-checks in code, and escalate the rest with a closed reason. Runnable offline, with tests.
+bounded-feedback-injection:
+  title: Bounded feedback injection — recurring failures become fixed reminders, never model-written instructions
+  description: Map closed-vocabulary failure signals to a reviewed lesson catalog and inject a capped selection into code-writing prompts only, so a pipeline learns from repeats without letting model output write instructions. Offline selector with tests.
+stateful-upgrade-verification:
+  title: Stateful upgrade verification — prove an upgrade keeps the previous version's real data
+  description: A fresh-install test does not show a stateful system can upgrade. Seed probe data on the base version, migrate or reuse it, and read it back on the proposed version before release. General reliability pattern; offline state-transition model with tests.
+eval-gate-ratchet:
+  title: Eval gate ratchet — a failing eval is fixed in the stage, never by weakening the gate
+  description: Pin eval thresholds, optional flags, dataset cases and full-suite execution so thresholds only tighten and cases only grow. Deterministic floor comparator, offline, with tests.
