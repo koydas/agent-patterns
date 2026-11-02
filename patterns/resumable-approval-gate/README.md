@@ -23,6 +23,10 @@ flowchart TD
 4. The effect is the only side effect and it lives **after** the gate, not inside it. Its idempotency key and the effect are one atomic write, so a replay is a no-op.
 5. The final checkpoint is terminal. A start input on an existing run id is refused before the runtime is touched, and `resume` on a finalized run raises.
 
+## Where it came from
+
+- `repo-orchestrator` S0 spike: a LangGraph checkpoint/interrupt prototype on synthetic data (81 offline tests) showed that an interrupted node restarts from its first line, that a raw start input on a paused thread wedges it, and that a killed finalize ran twice while its keyed effect ran once. → [results](https://github.com/koydas/repo-orchestrator/blob/main/prototypes/langgraph-spike/docs/results.md), [PR #3](https://github.com/koydas/repo-orchestrator/pull/3)
+
 ## When to use
 
 - A human pause that can last longer than any process (hours, days), on a runtime that checkpoints state.
@@ -53,4 +57,4 @@ flowchart TD
 - **Digest not bound** — an approval typed for report A applied to report B after a replay.
 - **State edit as input** — `Command(update=...)` is ordinary input in LangGraph and can reset counters; keep budgets in a store the checkpoint cannot rewrite.
 
-Reference only: validated by the S0 spike in [`repo-orchestrator`](https://github.com/koydas/repo-orchestrator) (`prototypes/langgraph-spike`), not running in a pipeline.
+Reference only: validated by the S0 spike in [`repo-orchestrator`](https://github.com/koydas/repo-orchestrator) (`prototypes/langgraph-spike`), not running in a pipeline. The spike's framework decision (ADR-0005) is still Proposed.
