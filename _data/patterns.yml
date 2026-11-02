@@ -35,6 +35,9 @@ typed-evidence-chain:
 human-gate:
   title: Human gate — keep a person at the irreversible step of an agent pipeline
   description: Agents propose, a human merges or deploys. Where to put the gate in an autonomous coding pipeline, what it costs, and how to enforce it in code rather than in a prompt.
+resumable-approval-gate:
+  title: Resumable approval gate — a durable human pause with an idempotent effect
+  description: A human approval that survives process death on a checkpointing runtime. The waiting node is replayed on resume, the approval is bound to the report digest, and the irreversible effect runs once. Runnable offline code.
 checkpoint-resume:
   title: Checkpoint and resume for long-running LLM agent pipelines
   description: Persist each step's output so a rate limit or crash at step 4 resumes there instead of restarting the whole pipeline. Implementations for GitHub Actions and Claude Code.
