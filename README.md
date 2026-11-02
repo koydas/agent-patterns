@@ -1,8 +1,8 @@
 # agent-patterns
 
-**20 patterns for multi-agent systems — each with a diagram, trade-offs, failure modes, when *not* to use it, and a runnable `impl.mjs`.**
+**21 patterns for multi-agent systems — each with a diagram, trade-offs, failure modes, when *not* to use it, and a runnable `impl.mjs`.**
 
-Not a framework. Every pattern here was named after the problem it solved in a pipeline that runs: 16 of 20 have implementations in public repos, [`autonomous-dev-loop`](https://github.com/koydas/autonomous-dev-loop) (GitHub Actions, headless) and [`ai-dev-tools`](https://github.com/koydas/ai-dev-tools) (Claude Code, interactive), and every row names where. The remaining patterns are marked as reference implementations. 11 patterns also have a **Where it came from** section linking the incident or ADR that forced them — for example, `loop-with-guard` exists because an auto-fix agent replaced a 26-test suite with an 18-line stub.
+Not a framework. Every pattern here was named after the problem it solved in a pipeline that runs: 16 of 21 have implementations in public repos, [`autonomous-dev-loop`](https://github.com/koydas/autonomous-dev-loop) (GitHub Actions, headless) and [`ai-dev-tools`](https://github.com/koydas/ai-dev-tools) (Claude Code, interactive), and every row names where. The remaining patterns are marked as reference implementations. 11 patterns also have a **Where it came from** section linking the incident or ADR that forced them — for example, `loop-with-guard` exists because an auto-fix agent replaced a 26-test suite with an 18-line stub.
 
 Try one without an API key: `node --test patterns/tool-grounded-review/impl.test.mjs` (11 tests), or see [Run one](#run-one).
 
@@ -46,6 +46,7 @@ Labels carry the state between those workflows: that's [label-driven-state-machi
 | Nobody can tell whether every acceptance criterion was implemented | [ac-traceability](./patterns/ac-traceability/) | [`ai-dev-tools`](https://github.com/koydas/ai-dev-tools) — AC coverage block + `/ac-check` |
 | A "bug fix" ships with no proof it ever reproduced the bug | [typed-evidence-chain](./patterns/typed-evidence-chain/) | [`ai-dev-tools`](https://github.com/koydas/ai-dev-tools) — bug / refactor / feature builders with typed evidence |
 | An agent merges or deploys on its own | [human-gate](./patterns/human-gate/) | [`autonomous-dev-loop`](https://github.com/koydas/autonomous-dev-loop), [`ai-dev-tools`](https://github.com/koydas/ai-dev-tools) — merge is always human |
+| The human approval must outlive the process, and a resumed node must not repeat the irreversible action | [resumable-approval-gate](./patterns/resumable-approval-gate/) | Reference only — validated by the S0 spike in [`repo-orchestrator`](https://github.com/koydas/repo-orchestrator) (`prototypes/langgraph-spike`) |
 
 ### Reliability and cost
 
@@ -81,7 +82,7 @@ node patterns/loop-with-guard/impl.mjs
 
 `tool-grounded-review`, `read-only-meta-loop` and `escalation-ladder` ship with their own tests: `node --test patterns/tool-grounded-review/impl.test.mjs patterns/read-only-meta-loop/impl.test.mjs patterns/escalation-ladder/impl.test.mjs`.
 
-`bounded-feedback-injection`, `stateful-upgrade-verification` and `eval-gate-ratchet` are pure offline functions with no CLI entry point, exercised by tests only: `node --test patterns/bounded-feedback-injection/impl.test.mjs patterns/stateful-upgrade-verification/impl.test.mjs patterns/eval-gate-ratchet/impl.test.mjs`.
+`bounded-feedback-injection`, `stateful-upgrade-verification`, `eval-gate-ratchet` and `resumable-approval-gate` are pure offline functions with no CLI entry point, exercised by tests only: `node --test patterns/bounded-feedback-injection/impl.test.mjs patterns/stateful-upgrade-verification/impl.test.mjs patterns/eval-gate-ratchet/impl.test.mjs patterns/resumable-approval-gate/impl.test.mjs`.
 
 ---
 
