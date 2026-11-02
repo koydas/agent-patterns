@@ -48,6 +48,8 @@ flowchart TD
 - **Effect before the wait** — a side effect placed above the `interrupt()` call runs once per resume; keep the waiting node pure.
 - **Start input on a live thread** — in LangGraph, a raw start input on a paused thread fails in the first node yet leaves it pending, superseding the interrupt (the run is wedged until someone forks from an earlier checkpoint). Refuse in the facade first; do not rely on a guard inside the graph.
 - **Key and effect in two writes** — a crash between them either repeats or loses the effect; commit them together.
+- **Replay with a different decision** — after the effect committed, a retry that says "reject" must not finalize as rejected; recovery uses the committed entry and refuses a conflict.
+- **Mutable report** — the digest binds the report only if the stored report is a snapshot and is re-verified before publishing.
 - **Digest not bound** — an approval typed for report A applied to report B after a replay.
 - **State edit as input** — `Command(update=...)` is ordinary input in LangGraph and can reset counters; keep budgets in a store the checkpoint cannot rewrite.
 

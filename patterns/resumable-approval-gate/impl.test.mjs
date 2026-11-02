@@ -50,3 +50,30 @@ test("a finalized run is closed to start and resume", () => {
   assert.throws(() => t.runtime().resume("r1", answer(cp, "reject")), /finalized/);
   assert.equal(t.ledger.get("r1").decision, "approve");
 });
+
+test("a conflicting retry after the effect committed is refused; the original decision stands", () => {
+  const t = fresh(), cp = t.runtime().start("r1", report);
+  assert.throws(() => t.runtime().resume("r1", answer(cp), { crashAfterEffect: true }), Crash);
+  assert.throws(() => t.runtime().resume("r1", answer(cp, "reject")), /already published as approve/);
+  assert.equal(t.store.get("r1").phase, "awaiting_approval");
+  const out = t.runtime().resume("r1", { ...answer(cp), reviewer: "someone-else" }); // same decision, replayed
+  assert.equal(out.decision.reviewer, "me", "attribution comes from the committed entry");
+  assert.equal(t.ledger.get("r1").decision, "approve");
+});
+
+test("mutating the caller's report after start does not change what is published", () => {
+  const t = fresh(), mine = { findings: [{ id: "c1", outcome: "verified" }] };
+  const cp = t.runtime().start("r1", mine);
+  mine.findings[0].outcome = "failed"; // after the reviewer was shown the digest
+  t.runtime().resume("r1", answer(cp));
+  assert.equal(t.ledger.get("r1").report.findings[0].outcome, "verified");
+  cp.report.findings.push({ id: "x" }); // a returned checkpoint is a copy, not the stored state
+  assert.equal(t.store.get("r1").report.findings.length, 1);
+});
+
+test("a stored report altered behind the runtime's back is refused before publication", () => {
+  const t = fresh(), cp = t.runtime().start("r1", report);
+  t.store.get("r1").report.findings.push({ id: "tampered" });
+  assert.throws(() => t.runtime().resume("r1", answer(cp)), /report changed/);
+  assert.equal(t.ledger.size, 0);
+});
