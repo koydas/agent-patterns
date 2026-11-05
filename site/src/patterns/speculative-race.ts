@@ -46,7 +46,7 @@ function simulate(c: Config, seed: number) {
     busy += a.settle;
     r.node(`s${a.i}`, a.ok ? 'ok' : a.hang ? 'warn' : 'fail', a.ok ? `${a.settle} ms` : a.hang ? 'timeout' : 'failed', t);
     r.log(`${NAMES[a.i]}: ${a.cause}`, a.ok ? 'ok' : 'fail', `s${a.i}`, t);
-    if (a.ok) r.transit(`s${a.i}-selector`, 300, { t, tone: 'ok' });
+    if (a.ok) r.transit(`s${a.i}-selector`, 300, { t, tone: 'ok' }).count('candidates', 1, t);
   }
   r.count('busy', busy, 0);
   const ok = list.filter((a) => a.ok);
@@ -111,11 +111,11 @@ export const speculativeRace: PatternSim = {
     { key: 'busy', label: 'Strategy time paid', format: 'ms', better: 'lower', hint: 'Sum of running time of every strategy: the cost side of the race.' },
     { key: 'calls', label: 'Agent calls', format: 'int', better: 'lower' },
   ],
-  derive: (t: Trace, c, seed) => ({
+  derive: (t: Trace) => ({
     outcome: t.outcome?.label ?? '—',
     // when the result exists, not when the last loser stops: background losers must not inflate it
     duration: typeof t.vars.resultAt === 'number' ? t.vars.resultAt : t.duration,
-    candidates: attempts(c, seed).filter((a) => a.ok).length,
+    candidates: t.counters.candidates ?? 0, // settled successfully in this run; aborted strategies produced nothing
     busy: t.counters.busy ?? 0,
     calls: (t.counters.started ?? 0) + (t.counters.selector ?? 0),
   }),

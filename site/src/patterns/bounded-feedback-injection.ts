@@ -37,7 +37,7 @@ function simulate(c: Config) {
   r.transit('runs-parse', 300).node('parse', 'active').wait(300);
   const rejected = h.filter((s) => !Object.hasOwn(LESSONS, s.id));
   for (const s of rejected) r.log(`Rejected before counting: "${s.id}" (${s.note}) — only allowlisted IDs pass`, 'fail', 'parse');
-  r.node('parse', rejected.length ? 'warn' : 'ok', `${h.length - rejected.length} allowlisted`).transit('parse-count', 300);
+  r.count('rejected', rejected.length).node('parse', rejected.length ? 'warn' : 'ok', `${h.length - rejected.length} allowlisted`).transit('parse-count', 300);
   r.node('count', 'active').wait(400);
   const recent = h.filter((s) => s.ts >= NOW - opt.maxAgeDays * DAY && Object.hasOwn(LESSONS, s.id)).slice(-opt.window);
   const counts = new Map<string, number>();
@@ -54,7 +54,7 @@ function simulate(c: Config) {
   r.transit('catalog-budget', 300).node('budget', 'active').wait(300);
   const chars = selected.reduce((s: number, l: { text: string }) => s + l.text.length, 0);
   r.node('budget', 'ok', `${selected.length} · ${chars} chars`).log(`Budget: ${selected.length}/${opt.maxLessons} lessons, ${chars}/${opt.maxChars} chars`, 'info', 'budget');
-  r.set('lessons', selected.map((l: { id: string; count: number }) => `${l.id} ×${l.count}|accent`));
+  r.set('lessons', selected.map((l: { id: string; count: number }) => `${l.id} ×${l.count}|accent`)).count('lessons', selected.length).count('chars', chars);
   r.transit('budget-writer', 400, { label: 'reminders' }).node('writer', 'active').log('Injected into the code-writing prompt only — reviewers and validators never see them', 'info', 'writer').wait(800).node('writer', 'ok');
   r.transit('writer-guard', 300).run('guard', 400, 'ok', 'unchanged').log('Existing code-enforced guardrails unchanged: a lesson is a reminder, never a permission', 'ok', 'guard');
   return r.end(`${selected.length} lesson(s) injected`, 'ok');
@@ -106,10 +106,7 @@ export const boundedFeedbackInjection: PatternSim = {
     { key: 'chars', label: 'Prompt characters added', format: 'int' },
     { key: 'rejected', label: 'Signals rejected', format: 'int' },
   ],
-  derive: (t: Trace, c) => {
-    const sel = c.readFailure ? [] : selectLessons(history(c), options(c));
-    return { outcome: t.outcome?.label ?? '—', lessons: sel.length, chars: sel.reduce((s: number, l: { text: string }) => s + l.text.length, 0), rejected: history(c).filter((s) => !Object.hasOwn(LESSONS, s.id)).length };
-  },
+  derive: (t: Trace) => ({ outcome: t.outcome?.label ?? '—', lessons: t.counters.lessons ?? 0, chars: t.counters.chars ?? 0, rejected: t.counters.rejected ?? 0 }),
   explain: (_t, c) => {
     const out: string[] = ['Computed by the repository\'s own selectLessons() — this playground imports patterns/bounded-feedback-injection/impl.mjs directly.'];
     if (c.untrusted) out.push('A free-text "signal" written by a model was dropped before counting: telemetry cannot become an instruction.');

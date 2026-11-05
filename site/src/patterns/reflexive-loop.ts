@@ -15,6 +15,7 @@ export function evolve(c: Config, seed: number) {
   for (let k = 1; k <= runs; k++) {
     const nits = NITS.filter((x) => !good.has(x)).length;
     history.push({ nits, rules: good.size + bad.length, bad: bad.length, pruned: false });
+    if (k === runs) break; // the last run's feedback is never learned: simulate() records no learn step after it
     // learn step: one rule per recurring nit
     for (const x of NITS) {
       if (good.has(x)) continue;

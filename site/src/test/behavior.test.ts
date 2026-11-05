@@ -214,3 +214,30 @@ describe('review fixes, round 2 (PR #21)', () => {
     expect(end.t).toBeGreaterThanOrEqual(Number(r.trace.vars.resultAt));
   });
 });
+
+describe('review fixes, round 3 (PR #21): metrics come from the recorded run', () => {
+  it('reflexive-loop: persisted rules match the learn passes the trace records', () => {
+    const r = run('reflexive-loop', { runs: 2, misread: 100 });
+    const learnPasses = r.trace.events.filter((e) => e.type === 'node' && e.node === 'learn' && e.status === 'active').length;
+    expect(learnPasses).toBe(1);
+    const rules = r.trace.vars.rules as string[];
+    expect(rules.filter((x) => x.endsWith('|fail')).length).toBe(r.metrics.bad);
+    // the final run's feedback is not learned: what persists is exactly what that run loaded
+    const loaded = r.trace.events.find((e) => e.type === 'log' && e.text.startsWith('Run 2: loads'));
+    expect(loaded && loaded.type === 'log' ? Number(loaded.text.match(/\((\d+) learned rules/)?.[1]) : NaN).toBe(r.metrics.rules);
+  });
+  it('speculative-race: aborted strategies are not counted as candidates', () => {
+    const r = run('speculative-race', { selection: 'any', failure: 0, checkPass: 100 });
+    const aborted = r.trace.events.filter((e) => e.type === 'node' && e.badge === 'aborted').length;
+    expect(aborted).toBeGreaterThan(0);
+    expect(r.metrics.candidates).toBe(3 - aborted);
+  });
+  it('bounded-feedback-injection, read-only-meta-loop, eval-gate-ratchet: counts are zero before the run records them', async () => {
+    const { buildTrace } = await import('../engine/trace');
+    for (const [slug, keys] of [['bounded-feedback-injection', ['lessons', 'chars', 'rejected']], ['read-only-meta-loop', ['proposals', 'notProposed']], ['eval-gate-ratchet', ['violations']]] as const) {
+      const sim = SIMS[slug];
+      const empty = sim.derive(buildTrace([{ t: 0, type: 'end', outcome: 'x', tone: 'ok' }]), normalize(sim, {}), 7);
+      for (const k of keys) expect(empty[k], `${slug}.${k}`).toBe(0);
+    }
+  });
+});

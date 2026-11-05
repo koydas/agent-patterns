@@ -100,10 +100,13 @@ export const readOnlyMetaLoop: PatternSim = {
     { key: 'writes', label: 'Writes (issues, PRs, comments)', format: 'int', better: 'lower' },
     { key: 'triggered', label: 'Pipeline runs triggered', format: 'int', better: 'lower' },
   ],
-  derive: (t: Trace, c) => {
-    const e = evaluate(c);
-    return { outcome: t.outcome?.label ?? '—', proposals: e.result?.proposals.length ?? 0, notProposed: e.result?.notProposed.length ?? 0, writes: t.counters.writes ?? 0, triggered: t.counters.triggered ?? 0 };
-  },
+  derive: (t: Trace) => ({
+    outcome: t.outcome?.label ?? '—',
+    proposals: Array.isArray(t.vars.proposals) ? t.vars.proposals.length : 0,
+    notProposed: Array.isArray(t.vars.notProposed) ? t.vars.notProposed.length : 0,
+    writes: t.counters.writes ?? 0,
+    triggered: t.counters.triggered ?? 0,
+  }),
   explain: (_t, c) => {
     const e = evaluate(c);
     if (e.tableError) return ['A lever that names an eval threshold would automate the cheapest wrong fix: the table\'s own test refuses it.'];

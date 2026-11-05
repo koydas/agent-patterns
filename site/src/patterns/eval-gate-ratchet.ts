@@ -34,7 +34,7 @@ function simulate(c: Config) {
   r.set('failures', []).node('change', 'ok', 'prompt / eval').log('An agent changes a stage prompt — and maybe the eval config', 'muted', 'change');
   r.transit('change-floor', 300).node('floor', 'active').wait(400).log('Floor check: pinned thresholds, optional flags, case ids, labels, input hashes, full-suite run', 'info', 'floor');
   if (!res.ok) {
-    r.node('floor', 'fail', `${res.failures.length} violation(s)`).set('failures', res.failures.map((f) => `${f}|fail`));
+    r.count('violations', res.failures.length).node('floor', 'fail', `${res.failures.length} violation(s)`).set('failures', res.failures.map((f) => `${f}|fail`));
     for (const f of res.failures) r.log(`checkRatchet: ${f}`, 'fail', 'floor');
     r.transit('floor-block', 400, { tone: 'fail' }).node('block', 'fail');
     return r.end('BLOCKED — the gate was weakened', 'fail');
@@ -101,7 +101,7 @@ export const evalGateRatchet: PatternSim = {
     { key: 'evalRuns', label: 'Full eval runs', format: 'int' },
     { key: 'fixes', label: 'Fixes in the stage', format: 'int' },
   ],
-  derive: (t: Trace, c) => ({ outcome: t.outcome?.label ?? '—', violations: (checkRatchet(FLOOR, proposed(c)) as { failures: string[] }).failures.length, evalRuns: t.counters.evalRuns ?? 0, fixes: t.counters.fixes ?? 0 }),
+  derive: (t: Trace) => ({ outcome: t.outcome?.label ?? '—', violations: t.counters.violations ?? 0, evalRuns: t.counters.evalRuns ?? 0, fixes: t.counters.fixes ?? 0 }),
   explain: (t) => {
     const label = t.outcome?.label ?? '';
     const out = ['Decided by the repository\'s own checkRatchet() — imported from patterns/eval-gate-ratchet/impl.mjs.'];
