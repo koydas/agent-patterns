@@ -53,6 +53,18 @@ describe.each(ALL.map((s) => [s.slug, s] as const))('%s', (_slug, sim) => {
     expect(sim.explain(run.trace, c, seed).length).toBeGreaterThan(0);
   });
 
+  it('shows no observed value before the run produced it (only theoretical metrics are known at t = 0)', async () => {
+    const { frameAt } = await import('../engine/trace');
+    const run0 = runSim(sim, defaults(sim), 7);
+    const f = frameAt(run0.trace, 0);
+    const m = sim.derive({ events: run0.trace.events.filter((e) => e.t <= 0), duration: 0, outcome: f.outcome, counters: f.counters, vars: f.vars }, run0.config, 7);
+    for (const s of sim.metrics) {
+      if (s.estimate || s.format === 'text' || typeof m[s.key] !== 'number') continue;
+      const v = m[s.key] as number;
+      expect(v === 0 || Number.isNaN(v), `${s.key} = ${v} at t = 0`).toBe(true);
+    }
+  });
+
   it('every parameter has a usable default and visible label', () => {
     for (const p of sim.params) {
       expect(p.label.length).toBeGreaterThan(0);

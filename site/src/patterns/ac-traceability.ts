@@ -99,7 +99,9 @@ export const acTraceability: PatternSim = {
   ],
   derive: (t: Trace, c) => {
     const v = review(c);
-    return { outcome: t.outcome?.label ?? '—', covered: AC.filter((_, i) => c[`ac${i}`] === 'covered').length, flagged: v.issues.length, trusted: v.hallucinatedPassed || 0 };
+    // known once the reviewer has read the block, not before
+    const done = !!t.outcome;
+    return { outcome: t.outcome?.label ?? '—', covered: done ? AC.filter((_, i) => c[`ac${i}`] === 'covered').length : NaN, flagged: done ? v.issues.length : NaN, trusted: done ? v.hallucinatedPassed || 0 : NaN };
   },
   explain: (_t, c) => {
     const v = review(c);

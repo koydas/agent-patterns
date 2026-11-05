@@ -135,3 +135,16 @@ describe('phases', () => {
     expect(phaseAt(sim.phases, r.trace, r.trace.duration)).toBe(sim.phases!.length - 1);
   });
 });
+
+describe('comparison deltas', () => {
+  it('never marks an unavailable value better or worse, and treats two unavailable values as equal', async () => {
+    const { deltas, same } = await import('../engine/format');
+    const spec = [{ key: 'x', label: 'x', format: 'ms' as const, better: 'lower' as const }];
+    const r = (x: number) => ({ config: {}, seed: 0, trace: buildTrace([{ t: 0, type: 'end', outcome: 'o', tone: 'ok' }]), metrics: { x } });
+    expect(deltas(spec, r(NaN), r(NaN))[0].better).toBeNull();
+    expect(deltas(spec, r(NaN), r(5))[0].better).toBeNull();
+    expect(deltas(spec, r(3), r(5))[0].better).toBe('a');
+    expect(same(NaN, NaN)).toBe(true);
+    expect(same(1, 2)).toBe(false);
+  });
+});

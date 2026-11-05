@@ -39,7 +39,7 @@ function simulate(c: Config, seed: number) {
     for (const id of ['run', 'output', 'feedback', 'learn', 'persist']) r.node(id, 'idle', null);
     r.set('run', `${k}/${e.history.length}`).node('run', 'active', `run ${k}`).log(`Run ${k}: loads CLAUDE.md (${h.rules} learned rules${h.bad ? `, ${h.bad} wrong` : ''})`, 'info', 'run').wait(500).node('run', 'ok');
     r.transit('run-output', 250).run('output', 500, 'ok').transit('output-feedback', 250);
-    r.run('feedback', 600, h.nits ? 'warn' : 'ok', `${h.nits} nits`).count('nits', h.nits).log(`Human review: ${h.nits} recurring nit(s)`, h.nits ? 'warn' : 'ok', 'feedback');
+    r.run('feedback', 600, h.nits ? 'warn' : 'ok', `${h.nits} nits`).count('nits', h.nits).count('firstNits', k === 1 ? h.nits : 0).log(`Human review: ${h.nits} recurring nit(s)`, h.nits ? 'warn' : 'ok', 'feedback');
     if (k === e.history.length) return;
     r.transit('feedback-learn', 250).run('learn', 700).count('calls').transit('learn-persist', 250);
     r.run('persist', 400, c.review ? 'ok' : 'warn', c.review ? 'diff reviewed' : 'appended').log(c.review ? 'Rules appended — the CLAUDE.md diff is reviewed before commit' : 'Rules appended to CLAUDE.md, no review', 'muted', 'persist');
@@ -90,7 +90,7 @@ export const reflexiveLoop: PatternSim = {
   derive: (t: Trace, c, seed) => {
     const e = evolve(c, seed);
     const done = !!t.outcome;
-    return { first: e.history[0].nits, last: done ? e.history[e.history.length - 1].nits : NaN, rules: done ? e.good.length + e.bad.length : NaN, bad: done ? e.bad.length : NaN, lines: done ? e.lines : NaN };
+    return { first: 'firstNits' in t.counters ? t.counters.firstNits : NaN, last: done ? e.history[e.history.length - 1].nits : NaN, rules: done ? e.good.length + e.bad.length : NaN, bad: done ? e.bad.length : NaN, lines: done ? e.lines : NaN };
   },
   explain: (_t, c, seed) => {
     const e = evolve(c, seed);

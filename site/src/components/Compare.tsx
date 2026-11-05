@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { deltas, fmt } from '../engine/format';
+import { deltas, fmt, same } from '../engine/format';
 import { usePlayback } from '../engine/playback';
 import { newSeed } from '../engine/rng';
 import { normalize, runSim } from '../engine/trace';
@@ -121,10 +121,10 @@ export function Compare({ sim, title, initial, initialPreset, onUrl }: ComparePr
               const d = rows[i];
               const mark = (side: 'a' | 'b') => (d.better === side ? <span className="better" aria-label="better"> ▲ better</span> : null);
               return (
-                <tr key={s.key} className={d.a !== d.b ? 'diff' : ''}>
+                <tr key={s.key} className={!same(d.a, d.b) ? 'diff' : ''}>
                   <th scope="row">{s.label}{s.estimate && <span className="tag est">theoretical</span>}</th>
                   <td>{fmt(d.a, s.format)}{mark('a')}</td>
-                  <td>{fmt(d.b, s.format)}{mark('b')}{d.a !== d.b && d.better === null && <span className="changed" aria-label="differs"> ≠</span>}</td>
+                  <td>{fmt(d.b, s.format)}{mark('b')}{!same(d.a, d.b) && d.better === null && <span className="changed" aria-label="differs"> ≠</span>}</td>
                 </tr>
               );
             })}

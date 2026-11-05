@@ -43,10 +43,10 @@ function simulate(c: Config, seed: number) {
     busy.set(p.slot, (busy.get(p.slot) ?? 0) + 1);
     const end = p.end;
     if (p.failed) {
-      r.node(`w${p.slot}`, 'fail', `#${p.i + 1}`, end).count('failed', 1, end).log(`Subtask #${p.i + 1} failed`, 'fail', `w${p.slot}`, end);
+      r.node(`w${p.slot}`, 'fail', `#${p.i + 1}`, end).count('failed', 1, end).count('compute', p.end - p.start, end).log(`Subtask #${p.i + 1} failed`, 'fail', `w${p.slot}`, end);
       if (firstFail === null || end < firstFail) firstFail = end;
     } else {
-      r.node(`w${p.slot}`, 'ok', `#${p.i + 1}`, end).count('completed', 1, end).log(`Subtask #${p.i + 1} done`, 'ok', `w${p.slot}`, end);
+      r.node(`w${p.slot}`, 'ok', `#${p.i + 1}`, end).count('completed', 1, end).count('compute', p.end - p.start, end).log(`Subtask #${p.i + 1} done`, 'ok', `w${p.slot}`, end);
       r.transit(`w${p.slot}-agg`, D, { t: end, tone: 'ok' });
     }
   }
@@ -131,7 +131,7 @@ export const fanOut: PatternSim = {
       speedup: t.outcome ? seq / span(plan) : NaN,
       completed: t.counters.completed ?? 0,
       failed: t.counters.failed ?? 0,
-      compute: plan.reduce((s, p) => s + (p.end - p.start), 0),
+      compute: t.counters.compute ?? 0, // worker time accrues as each subtask settles
       tokens: t.counters.tokens ?? 0,
     };
   },
