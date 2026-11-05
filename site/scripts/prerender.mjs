@@ -4,11 +4,15 @@
 import { copyFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { renderFooter, renderHeader } from '../src/site-kit/render.mjs';
 import { BASE, CATEGORY_LABEL, loadCatalog, loadDoc, loadReadme, loadRootReadme, ROOT, SITE } from './catalog.mjs';
 
 const DIST = join(dirname(fileURLToPath(import.meta.url)), '../dist');
 const template = readFileSync(join(DIST, 'index.html'), 'utf8');
 const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+
+// The shared top bar and footer are in the static HTML too (no-JS readers, search engines); React replaces them on mount.
+const shell = (main) => `${renderHeader('agent-patterns')}${main}<footer class="site-footer">${renderFooter('agent-patterns')}</footer>`;
 
 function page({ path, title, description, body, type = 'article' }) {
   const url = `${SITE}${BASE}${path}`;
@@ -25,7 +29,7 @@ function page({ path, title, description, body, type = 'article' }) {
   ].join('\n    ');
   const html = template
     .replace(/<!--meta-->[\s\S]*?<!--\/meta-->/, meta)
-    .replace('<!--prerender-->', `<main class="wrap doc prerender">${body}</main>`);
+    .replace('<!--prerender-->', `${shell(`<main class="wrap doc prerender">${body}</main>`)}`);
   const file = join(DIST, path, 'index.html');
   mkdirSync(dirname(file), { recursive: true });
   writeFileSync(file, html);
