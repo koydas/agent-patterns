@@ -14,6 +14,8 @@ export interface UrlState {
   b: Config;
   seedA: number;
   seedB: number;
+  /** The URL carries a saved comparison (even one equal to the defaults), not a request for a preset. */
+  saved: boolean;
 }
 
 const DEFAULT_SEED = 7;
@@ -43,6 +45,7 @@ export function readUrl(sim: PatternSim, search: string): UrlState {
     b: readConfig(sim, params, 'b.'),
     seedA: seedOf(params.get('sa'), seed),
     seedB: seedOf(params.get('sb'), seed),
+    saved: params.has('ab') || [...params.keys()].some((k) => k.startsWith('a.') || k.startsWith('b.')),
   };
 }
 
@@ -55,6 +58,7 @@ export function toSearch(sim: PatternSim, s: Partial<UrlState> & { mode: Mode })
   const out = new URLSearchParams();
   if (s.mode === 'compare') {
     out.set('mode', 'compare');
+    out.set('ab', '1'); // explicit scenarios: a default-valued comparison must not reload as a preset
     if (s.a) writeConfig(sim, out, s.a, 'a.');
     if (s.b) writeConfig(sim, out, s.b, 'b.');
     if (s.seedA !== undefined && s.seedA !== DEFAULT_SEED) out.set('sa', String(s.seedA));

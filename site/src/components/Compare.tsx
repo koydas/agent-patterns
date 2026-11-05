@@ -70,7 +70,12 @@ export function Compare({ sim, title, initial, initialPreset, onUrl }: ComparePr
 
   const edited = () => { setPreset(null); setLabels({ a: 'Scenario A', b: 'Scenario B' }); };
   const copyAtoB = () => { setB({ ...a }); setSeedB(seedA); edited(); };
-  const swap = () => { setA(b); setB(a); setLabels((l) => ({ a: l.b, b: l.a })); };
+  // each configuration keeps its own seed, so swapping only exchanges the columns
+  const swap = () => {
+    const sb = shared ? seedA : seedB;
+    setA(b); setB(a); setSeedA(sb); setSeedB(seedA);
+    setLabels((l) => ({ a: l.b, b: l.a }));
+  };
   const rows = deltas(sim.metrics, { ...runA, metrics: fa.metrics }, { ...runB, metrics: fb.metrics });
   const explanation = useMemo(() => (bothEnded && sim.compare ? sim.compare(runA, runB) : []), [bothEnded, sim, runA, runB]);
 

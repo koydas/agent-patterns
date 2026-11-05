@@ -70,7 +70,7 @@ export function PatternPage({ slug, search }: { slug: string; search: string }) 
 
       <div id="playground" role="tabpanel" aria-label={mode === 'compare' ? 'Compare scenarios' : 'Explore'}>
         {mode === 'compare'
-          ? <Compare key={`${slug}-c`} sim={sim} title={slug} initial={{ a: url.a, b: url.b, seedA: url.seedA, seedB: url.seedB }} initialPreset={/[?&](a|b)\./.test(search) ? undefined : sim.comparePresets[0]} onUrl={onUrl} />
+          ? <Compare key={`${slug}-c`} sim={sim} title={slug} initial={{ a: url.a, b: url.b, seedA: url.seedA, seedB: url.seedB }} initialPreset={url.saved ? undefined : sim.comparePresets[0]} onUrl={onUrl} />
           : <Playground key={`${slug}-e`} sim={sim} title={slug} initialConfig={url.config} initialSeed={url.seed} onUrl={onUrl} />}
       </div>
 

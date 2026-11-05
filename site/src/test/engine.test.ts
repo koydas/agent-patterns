@@ -89,6 +89,14 @@ describe('config', () => {
     expect(back.a.maxRounds).toBe(2);
     expect(back.b.maxRounds).toBe(5);
     expect(back.seedA).toBe(4);
+    expect(back.saved).toBe(true);
+  });
+  it('marks a default-valued comparison as saved, so it never reloads as a preset', () => {
+    const d = normalize(loopWithGuard, {});
+    const q = toSearch(loopWithGuard, { mode: 'compare', a: d, b: d, seedA: 11, seedB: 23 });
+    const back = readUrl(loopWithGuard, q);
+    expect(back).toMatchObject({ mode: 'compare', saved: true, seedA: 11, seedB: 23, a: d, b: d });
+    expect(readUrl(loopWithGuard, '?mode=compare').saved).toBe(false);
   });
 });
 

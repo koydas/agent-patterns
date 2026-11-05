@@ -83,6 +83,22 @@ describe('Compare', () => {
   });
 });
 
+describe('Compare swap', () => {
+  it('swaps each configuration with its own seed, exchanging the columns only', () => {
+    const fo = SIMS['fan-out'];
+    render(<Compare sim={fo} title="fan-out" initial={{ a: normalize(fo, { tasks: 4, workers: 1 }), b: normalize(fo, { tasks: 4, workers: 4 }), seedA: 11, seedB: 23 }} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Pause' }));
+    const end = () => { const s = screen.getByLabelText('Simulated time') as HTMLInputElement; act(() => { fireEvent.change(s, { target: { value: s.max } }); }); };
+    const spans = () => within(screen.getByRole('region', { name: 'Comparative metrics' })).getByText('Worker span').closest('tr')!.querySelectorAll('td');
+    end();
+    const clean = () => [...spans()].map((td) => td.textContent!.replace(/ ▲ better| ≠/g, '').trim());
+    const [a0, b0] = clean();
+    fireEvent.click(screen.getByRole('button', { name: 'Swap A ↔ B' }));
+    end();
+    expect(clean()).toEqual([b0, a0]);
+  });
+});
+
 describe('Featured walkthrough', () => {
   it('steps through the phases of the real loop-with-guard run', async () => {
     const { Featured } = await import('../components/Featured');
