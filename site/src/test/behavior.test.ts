@@ -241,3 +241,25 @@ describe('review fixes, round 3 (PR #21): metrics come from the recorded run', (
     }
   });
 });
+
+describe('review fixes, round 4 (PR #21)', () => {
+  it('tool-grounded-review: the evidence table grows in arrival order and keeps every executed check', async () => {
+    const { frameAt } = await import('../engine/trace');
+    for (const c of [{}, { typecheck: 'PASS' }, { test: 'UNVERIFIED', typecheck: 'FAIL' }]) {
+      const r = run('tool-grounded-review', c);
+      let prev = 0;
+      for (const e of r.trace.events) {
+        if (e.type !== 'set' || e.key !== 'evidence') continue;
+        const now = (frameAt(r.trace, e.t).vars.evidence as string[]).length;
+        expect(now).toBeGreaterThanOrEqual(prev);
+        prev = now;
+      }
+      const declared = 'typecheck' in c ? 3 : 2;
+      expect((r.trace.vars.evidence as string[]).length, JSON.stringify(c)).toBe(declared);
+    }
+  });
+  it('sequential-pipeline: format drift adds nothing when the full output is already passed', () => {
+    expect(run('sequential-pipeline', { passing: 'full', drift: true }).metrics.context).toBe(run('sequential-pipeline', { passing: 'full' }).metrics.context);
+    expect(Number(run('sequential-pipeline', { drift: true }).metrics.context)).toBeGreaterThan(Number(run('sequential-pipeline', {}).metrics.context));
+  });
+});

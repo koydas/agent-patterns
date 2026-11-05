@@ -52,7 +52,7 @@ function simulate(c: Config) {
   } else {
     const t0 = r.now - 700;
     let end = 0;
-    const ev: string[] = [];
+    const arrivals: { at: number; entry: string }[] = [];
     for (const n of declared) {
       const s = String(c[n]);
       r.transit(`change-${n}`, 300, { t: t0 });
@@ -64,10 +64,11 @@ function simulate(c: Config) {
       r.node(n, tone === 'ok' ? 'ok' : tone === 'fail' ? 'fail' : 'warn', label, t);
       r.log(s === 'FLAKY' ? `${n}: FAIL, then PASS on re-run → FLAKY, i.e. unverified — re-running until green is not a pass` : s === 'UNVERIFIED' ? `${n}: timed out — UNVERIFIED, never read as "nothing failed"` : s === 'REMOVED' ? `${n}: the base declares it, the change removed it → UNVERIFIED, not N/A` : `${n}: ${s}${s === 'FAIL' ? ' (output tail kept as feedback)' : ''}`, tone, n, t);
       r.transit(`${n}-evidence`, 300, { t, tone });
-      ev.push(`${n}: ${d.checks[n]}|${tone}`);
-      r.set('evidence', [...ev], t + 300);
+      arrivals.push({ at: t + 300, entry: `${n}: ${d.checks[n]}|${tone}` });
       end = Math.max(end, t + 300);
     }
+    // the evidence table grows in the order results arrive, not in declaration order
+    arrivals.sort((x, y) => x.at - y.at).forEach((a, i) => r.set('evidence', arrivals.slice(0, i + 1).map((x) => x.entry), a.at));
     r.at(end).node('evidence', 'ok', `${declared.length} checks`).transit('evidence-reviewer', 350);
     r.transit('context-reviewer', 350, { t: end, advance: false });
   }

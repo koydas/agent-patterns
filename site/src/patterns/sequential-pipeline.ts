@@ -39,7 +39,8 @@ function simulate(c: Config) {
       r.set('handoff', 'whole output (no Handoff block)|fail').count('drift');
     } else r.set('handoff', k < 2 ? `### Handoff of ${s.label}|accent` : 'final verdict|ok');
     if (k < 2) r.transit(`${s.id}-${STAGES[k + 1].id}`, 350, { label: c.passing === 'full' || drift ? 'full output' : 'Handoff' });
-    if (drift && k === 1) r.count('context', OUTPUT - HANDOFF);
+    // the fallback to the whole output only costs extra when the Handoff block was what the next stage read
+    if (drift && k === 1 && c.passing !== 'full') r.count('context', OUTPUT - HANDOFF);
   }
   r.transit('reviewer-done', 300, { tone: 'ok' }).node('done', 'ok');
   return r.end(c.drift ? 'APPROVED — on an unparsed handoff' : 'APPROVED — output ready', c.drift ? 'warn' : 'ok');
