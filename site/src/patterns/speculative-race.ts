@@ -35,20 +35,18 @@ function simulate(c: Config, seed: number) {
   }
   const winner = any ? list.filter((a) => a.ok).sort((x, y) => x.settle - y.settle)[0] : null;
   const cutoff = any && winner && c.abort ? winner.settle + 250 : Infinity;
-  let busy = 0;
   for (const a of list) {
     const t = a.settle + 250;
     if (t > cutoff && a !== winner) {
       r.node(`s${a.i}`, 'skipped', 'aborted', cutoff).log(`${NAMES[a.i]}: aborted after the winner (AbortSignal)`, 'muted', `s${a.i}`, cutoff);
-      busy += cutoff - 250;
+      r.count('busy', cutoff - 250, cutoff); // paid until the abort lands
       continue;
     }
-    busy += a.settle;
+    r.count('busy', a.settle, t); // paid as each strategy settles, never ahead of the playback
     r.node(`s${a.i}`, a.ok ? 'ok' : a.hang ? 'warn' : 'fail', a.ok ? `${a.settle} ms` : a.hang ? 'timeout' : 'failed', t);
     r.log(`${NAMES[a.i]}: ${a.cause}`, a.ok ? 'ok' : 'fail', `s${a.i}`, t);
     if (a.ok) r.transit(`s${a.i}-selector`, 300, { t, tone: 'ok' }).count('candidates', 1, t);
   }
-  r.count('busy', busy, 0);
   const ok = list.filter((a) => a.ok);
   if (any) {
     if (!winner) { r.at(Math.max(...list.map((a) => a.settle)) + 250).node('selector', 'fail').log('Promise.any rejects with AggregateError: every strategy failed', 'fail', 'selector'); return r.end('FAILED — every strategy failed', 'fail'); }

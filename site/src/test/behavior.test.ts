@@ -263,3 +263,22 @@ describe('review fixes, round 4 (PR #21)', () => {
     expect(Number(run('sequential-pipeline', { drift: true }).metrics.context)).toBeGreaterThan(Number(run('sequential-pipeline', {}).metrics.context));
   });
 });
+
+describe('review fixes, round 5 (PR #21)', () => {
+  it('speculative-race: paid strategy time accumulates as strategies settle, not at t = 0', async () => {
+    const { frameAt } = await import('../engine/trace');
+    const r = run('speculative-race', { selection: 'any', failure: 0, checkPass: 100 });
+    expect(frameAt(r.trace, 0).counters.busy ?? 0).toBe(0);
+    const firstSettle = Math.min(...r.trace.events.filter((e) => e.type === 'count' && e.key === 'busy').map((e) => e.t));
+    expect(firstSettle).toBeGreaterThan(0);
+    expect(r.metrics.busy).toBeGreaterThan(0);
+  });
+  it('no pattern counts a cost at t = 0 for work that happens later', async () => {
+    const { SIMS: all } = await import('../patterns');
+    for (const sim of Object.values(all)) {
+      const r = run(sim.slug, {});
+      const early = r.trace.events.filter((e) => e.type === 'count' && e.t === 0 && /busy|tokens|calls|billed/.test(e.key));
+      expect(early, sim.slug).toEqual([]);
+    }
+  });
+});
