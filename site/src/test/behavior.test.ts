@@ -182,3 +182,22 @@ describe('staged-prompt-separation', () => {
     expect(run('staged-prompt-separation', { bleed: true }).metrics.hits).toBe(0);
   });
 });
+
+describe('review fixes (PR #21)', () => {
+  it('fan-out: no worker starts after it finishes, for any allowed latency', () => {
+    for (let seed = 0; seed < 30; seed++) for (const latency of [200, 300]) {
+      const r = run('fan-out', { tasks: 4, workers: 2, latency, variance: 50 }, seed);
+      const last: Record<string, string> = {};
+      for (const e of r.trace.events) if (e.type === 'node') last[e.node] = e.status;
+      for (const id of ['w0', 'w1']) expect(last[id], `seed ${seed} ${id}`).not.toBe('active');
+    }
+  });
+  it('speculative-race: time to result does not depend on aborting the losers', () => {
+    const base = { selection: 'any', failure: 0, checkPass: 100 };
+    const aborted = run('speculative-race', { ...base, abort: true });
+    const kept = run('speculative-race', { ...base, abort: false });
+    expect(kept.metrics.duration).toBe(aborted.metrics.duration);
+    expect(kept.trace.duration).toBeGreaterThan(Number(kept.metrics.duration));
+    expect(Number(kept.metrics.busy)).toBeGreaterThan(Number(aborted.metrics.busy));
+  });
+});

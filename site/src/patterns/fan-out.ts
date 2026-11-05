@@ -33,12 +33,13 @@ function simulate(c: Config, seed: number) {
   const busy = new Map<number, number>();
   for (const p of plan) {
     const t0 = p.start;
-    // dispatch is part of the subtask's latency, so spans compare exactly
-    r.transit(`task-w${p.slot}`, D, { t: t0, label: `#${p.i + 1}` });
-    r.node(`w${p.slot}`, 'active', `#${p.i + 1}`, t0 + D);
-    r.log(`Worker ${p.slot + 1} starts subtask #${p.i + 1}`, 'info', `w${p.slot}`, t0 + D);
-    r.count('started', 1, t0 + D);
-    r.count('tokens', 1500, t0 + D);
+    // dispatch is part of the subtask's latency, and never longer than half of it: start < end always
+    const d = Math.min(D, Math.floor((p.end - p.start) / 2));
+    r.transit(`task-w${p.slot}`, d, { t: t0, label: `#${p.i + 1}` });
+    r.node(`w${p.slot}`, 'active', `#${p.i + 1}`, t0 + d);
+    r.log(`Worker ${p.slot + 1} starts subtask #${p.i + 1}`, 'info', `w${p.slot}`, t0 + d);
+    r.count('started', 1, t0 + d);
+    r.count('tokens', 1500, t0 + d);
     busy.set(p.slot, (busy.get(p.slot) ?? 0) + 1);
     const end = p.end;
     if (p.failed) {

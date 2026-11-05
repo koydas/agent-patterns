@@ -53,7 +53,7 @@ function simulate(c: Config, seed: number) {
   if (any) {
     if (!winner) { r.at(Math.max(...list.map((a) => a.settle)) + 250).node('selector', 'fail').log('Promise.any rejects with AggregateError: every strategy failed', 'fail', 'selector'); return r.end('FAILED — every strategy failed', 'fail'); }
     r.at(winner.settle + 550).node('selector', 'ok', NAMES[winner.i]).log(`Promise.any resolves with the first success: ${NAMES[winner.i]} — no ranking`, 'ok', 'selector');
-    r.transit('selector-done', 300, { tone: 'ok' }).node('done', 'ok');
+    r.transit('selector-done', 300, { tone: 'ok' }).node('done', 'ok').set('resultAt', r.now);
     if (!c.abort) r.at(Math.max(...list.map((a) => a.settle)) + 250).log('Losers were not aborted: they ran (and billed) to the end', 'warn');
     return r.end(`First valid: ${NAMES[winner.i]}`, 'ok');
   }
@@ -63,7 +63,7 @@ function simulate(c: Config, seed: number) {
   r.wait(SELECTOR_MS).count('selector');
   const pick = ok[0];
   r.node('selector', 'ok', NAMES[pick.i]).log(`Selector picks ${NAMES[pick.i]} (mock selector: first candidate)`, 'ok', 'selector');
-  r.transit('selector-done', 300, { tone: 'ok' }).node('done', ok.length < list.length ? 'warn' : 'ok');
+  r.transit('selector-done', 300, { tone: 'ok' }).node('done', ok.length < list.length ? 'warn' : 'ok').set('resultAt', r.now);
   return r.end(ok.length < list.length ? `Selected ${NAMES[pick.i]} — degraded ${ok.length}/${list.length}` : `Selected ${NAMES[pick.i]} of ${ok.length}`, ok.length < list.length ? 'warn' : 'ok');
 }
 
@@ -113,7 +113,8 @@ export const speculativeRace: PatternSim = {
   ],
   derive: (t: Trace, c, seed) => ({
     outcome: t.outcome?.label ?? '—',
-    duration: t.duration,
+    // when the result exists, not when the last loser stops: background losers must not inflate it
+    duration: typeof t.vars.resultAt === 'number' ? t.vars.resultAt : t.duration,
     candidates: attempts(c, seed).filter((a) => a.ok).length,
     busy: t.counters.busy ?? 0,
     calls: (t.counters.started ?? 0) + (t.counters.selector ?? 0),
