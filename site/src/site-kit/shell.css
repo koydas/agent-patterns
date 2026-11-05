@@ -18,7 +18,7 @@
 .sk-bar .sk-brand { display: flex; align-items: center; gap: 10px; color: var(--sk-text); font-weight: 650; font-size: 15px; letter-spacing: -0.01em; white-space: nowrap; }
 .sk-bar .sk-brand-name { overflow: hidden; text-overflow: ellipsis; }
 .sk-bar .sk-mark { display: grid; place-items: center; flex: none; color: var(--sk-accent-soft); }
-.sk-bar .sk-nav { display: flex; align-items: center; gap: var(--sk-space-2); margin-left: auto; }
+.sk-bar .sk-nav { display: flex; flex: none; align-items: center; gap: var(--sk-space-2); margin: 0 0 0 auto; padding: 0; overflow: visible; }
 
 .sk-bar details.sk-menu { position: relative; margin: 0; }
 .sk-bar .sk-menu > summary {
@@ -73,6 +73,7 @@
 
 .sk-footer { background: var(--sk-bg); border-top: 1px solid var(--sk-border); color: var(--sk-muted); font-size: var(--sk-text-sm); line-height: 1.6; padding: var(--sk-space-5) 0 var(--sk-space-6); }
 .sk-footer .sk-footer-in { display: grid; gap: var(--sk-space-3); max-width: var(--sk-max); margin: 0 auto; padding: 0 var(--sk-space-4); }
+.sk-footer nav { display: block; flex: none; margin: 0; padding: 0; overflow: visible; }
 .sk-footer p { margin: 0; color: var(--sk-muted); }
 .sk-footer ul { display: flex; flex-wrap: wrap; gap: var(--sk-space-1) var(--sk-space-4); margin: 0; padding: 0; list-style: none; }
 .sk-footer li { margin: 0; padding: 0; border: 0; }

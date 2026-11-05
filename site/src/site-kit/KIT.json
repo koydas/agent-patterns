@@ -2,7 +2,7 @@
   "name": "site-kit",
   "version": "1.0.0",
   "profile": "react",
-  "hash": "087e6c432808a0d2271a41e391c115248d500ffb896a5de388afdcf8599e9ede",
+  "hash": "59530b3cd3ef68319970b435d4669c6f8a95f51ea88635b590bec2f497cbbcbc",
   "files": {
     "footer.html": "2b771e74f12ee5bf2dc81322c9b3c6ff5da55f92e70502d8bdada7bf0647507c",
     "header.html": "3c7fd5f6db128821f2ca86b970158af978d23b5b594a5dca25619ff7e354b890",
@@ -10,7 +10,7 @@
     "pagehead.html": "7b053354d6ba3409b37bee62e86141511814a84974fba2e78b2560d32b4124f0",
     "react/SiteShell.tsx": "1f6040eb31153ca336f249f2f7f9824d072294c1c0d2b13711dff8a56e68e0a2",
     "render.mjs": "9bfc291b9022df4dd037c410c5dadd04cf8ba6b5212b63a3da777bbbbd3d963c",
-    "shell.css": "7cb32fa0099aba8e23fbf4092cb3f1b076533aa209451dda2ab5f6d1231547b0",
+    "shell.css": "123ca70bdd80b681336bf7c9e006c2472758a51e21837ee9a19415a4c4f8bb7b",
     "tokens.css": "fff6958ee4f9be2dc8d79967e8089f48a73c126cd9aee00833e5e378d61dfd75"
   }
 }
