@@ -121,6 +121,7 @@ export const router: PatternSim = {
     { id: 'misroute', label: 'Misclassification', description: 'A router right 50 % of the time.', kind: 'failure', config: { accuracy: 50 }, seed: 3 },
     { id: 'unknown', label: 'Unknown category', description: 'Every task is a docs request.', kind: 'failure', config: { category: 'DOCS', tasks: 3 } },
   ],
+  phases: [{ label: 'Input', nodes: ['input'] }, { label: 'Analysis', nodes: ['router'], status: ['active'] }, { label: 'Routing', nodes: ['router'] }, { label: 'Execution', nodes: [...CATS, 'GENERALIST', 'done'] }],
   comparePresets: [
     { id: 'fallback', label: 'Default FEATURE vs generalist', description: 'Same stream, two ways to handle a task no category fits.', a: { label: 'Default to FEATURE (impl)', config: { category: 'MIXED', tasks: 10 } }, b: { label: 'Fallback generalist', config: { category: 'MIXED', tasks: 10, unknown: 'generalist' } }, seed: 9 },
     { id: 'accuracy', label: 'Accuracy 95 % vs 70 %', description: 'Misrouting is silent: compare how many tasks land on the wrong specialist.', a: { label: '95 %', config: { accuracy: 95, tasks: 12 } }, b: { label: '70 %', config: { accuracy: 70, tasks: 12 } } },

@@ -132,6 +132,7 @@ export const validatorFirst: PatternSim = {
     { id: 'strictfault', label: 'Prose verdicts, strict', description: 'Same malformed rate, strict parser.', kind: 'failure', config: { malformed: 60 } },
     { id: 'lenient', label: 'Lenient validator', description: '60 % accuracy: false positives and negatives.', kind: 'failure', config: { accuracy: 60 } },
   ],
+  phases: [{ label: 'Issue', nodes: ['issue'] }, { label: 'Validate', nodes: ['validator', 'parse', 'valid'] }, { label: 'Gate outcome', nodes: ['pipeline', 'refine', 'fault'] }],
   comparePresets: [
     { id: 'gate', label: 'No gate vs gate', description: 'Same issues: generation on everything vs a cheap gate first.', a: { label: 'No validator', config: { gate: false } }, b: { label: 'validator-first', config: {} } },
     { id: 'parse', label: 'Prefix vs strict parsing', description: 'Same malformed verdicts, two parsers.', a: { label: 'startsWith("VALID")', config: { parsing: 'prefix', malformed: 50 } }, b: { label: 'Strict JSON', config: { malformed: 50 } } },

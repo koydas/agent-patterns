@@ -82,3 +82,16 @@ describe('Compare', () => {
     expect(panels.map((p) => p.value)).toEqual(['2', '2']);
   });
 });
+
+describe('Featured walkthrough', () => {
+  it('steps through the phases of the real loop-with-guard run', async () => {
+    const { Featured } = await import('../components/Featured');
+    render(<Featured />);
+    const stepper = screen.getAllByRole('list', { name: 'Phases' })[0];
+    fireEvent.click(screen.getByRole('button', { name: /Next step/ }));
+    expect(within(stepper).getByText('Generation').closest('li')).toHaveAttribute('aria-current', 'step');
+    fireEvent.click(screen.getByRole('button', { name: /Next step/ }));
+    expect(within(stepper).getByText('Review').closest('li')).toHaveAttribute('aria-current', 'step');
+    expect(within(stepper).getByText('Generation').closest('li')).toHaveClass('past');
+  });
+});

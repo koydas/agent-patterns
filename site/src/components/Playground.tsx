@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { usePlayback } from '../engine/playback';
 import { newSeed } from '../engine/rng';
-import { normalize, runSim } from '../engine/trace';
+import { normalize, phaseAt, runSim } from '../engine/trace';
+import { Stepper } from './Stepper';
 import { toSearch } from '../engine/url';
 import type { Config, PatternSim, Preset } from '../engine/types';
 import { Diagram } from './Diagram';
@@ -56,6 +57,7 @@ export function Playground({ sim, title, initialConfig, initialSeed, onUrl }: Pl
             <p className="invariant"><span className="tag inv">invariant</span>{sim.invariant}</p>
             {frame.outcome && <span className={`outcome tone-${frame.outcome.tone}`} role="status">{frame.outcome.label}</span>}
           </div>
+          {sim.phases && <Stepper phases={sim.phases} current={phaseAt(sim.phases, run.trace, pb.clock)} />}
           <Diagram graph={graph} frame={frame} orientation={orientation} label={`${title} diagram`} />
         </div>
         <Transport pb={pb} timeUnit={sim.timeUnit} />

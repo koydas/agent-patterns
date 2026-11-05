@@ -142,6 +142,7 @@ export const speculativeRace: PatternSim = {
     { id: 'allfail', label: 'Every strategy fails', description: 'Nothing to select from.', kind: 'failure', config: { failure: 100 } },
     { id: 'noabort', label: 'No abort on losers', description: 'Promise.any without AbortSignal: N × cost anyway.', kind: 'failure', config: { selection: 'any', abort: false, failure: 0, checkPass: 100 } },
   ],
+  phases: [{ label: 'Launch', nodes: ['input'] }, { label: 'Race', nodes: ['s0', 's1', 's2', 's3'] }, { label: 'Select', nodes: ['selector'] }, { label: 'Result', nodes: ['done'] }],
   comparePresets: [
     { id: 'settled-any', label: 'Select best vs first valid', description: 'Same strategies and draws; latency vs cost.', a: { label: 'allSettled + selector', config: { failure: 0 } }, b: { label: 'Promise.any + abort', config: { failure: 0, selection: 'any', checkPass: 100 } } },
     { id: 'n', label: '2 vs 4 strategies', description: 'More diversity, more cost.', a: { label: '2 strategies', config: { strategies: 2 } }, b: { label: '4 strategies', config: { strategies: 4 } } },

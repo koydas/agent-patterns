@@ -138,3 +138,16 @@ export function runSim(sim: PatternSim, config: Config, seed: number): Run {
   const trace = buildTrace(sim.simulate(config, seed));
   return { config, seed, trace, metrics: sim.derive(trace, config, seed) };
 }
+
+/** Index of the current phase: the phase matching the most recent node status change (idle/skipped ignored). */
+export function phaseAt(phases: { nodes: string[]; status?: NodeStatus[] }[] | undefined, trace: Trace, clock: number): number {
+  if (!phases?.length) return -1;
+  let idx = -1;
+  for (const e of trace.events) {
+    if (e.t > clock) break;
+    if (e.type !== 'node' || e.status === 'idle' || e.status === 'skipped') continue;
+    const p = phases.findIndex((ph) => ph.nodes.includes(e.node) && (!ph.status || ph.status.includes(e.status)));
+    if (p >= 0) idx = p;
+  }
+  return idx;
+}

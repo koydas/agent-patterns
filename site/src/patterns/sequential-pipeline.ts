@@ -101,6 +101,7 @@ export const sequentialPipeline: PatternSim = {
     { id: 'changes', label: 'Changes requested', description: 'No backtracking: halt and escalate.', kind: 'failure', config: { reviewer: 'CHANGES_REQUESTED' } },
     { id: 'drift', label: 'Schema drift', description: 'Builder breaks the Handoff format.', kind: 'failure', config: { drift: true } },
   ],
+  phases: [{ label: 'Analyst', nodes: ['issue', 'analyst'] }, { label: 'Builder', nodes: ['builder'] }, { label: 'Reviewer', nodes: ['reviewer'] }, { label: 'Outcome', nodes: ['done', 'halt0', 'halt1', 'halt2'] }],
   comparePresets: [
     { id: 'contract', label: 'Handoff vs full output', description: 'Same pipeline, two ways to pass context.', a: { label: 'Full prose output', config: { passing: 'full' } }, b: { label: '### Handoff only', config: {} } },
   ],

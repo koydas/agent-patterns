@@ -191,6 +191,7 @@ export const loopWithGuard: PatternSim = {
     { id: 'flaky', label: 'Flaky verdict format', description: 'Half the answers are malformed; the repair turn absorbs most.', kind: 'failure', config: { validity: 50, approval: 40 }, seed: 11 },
     { id: 'refusal', label: 'Safety refusal', description: 'The coder is refused in round 2.', kind: 'failure', config: { refusal: true, approval: 0 } },
   ],
+  phases: [{ label: 'Generation', nodes: ['task', 'coder'] }, { label: 'Review', nodes: ['reviewer', 'parse', 'repair'] }, { label: 'Verdict', nodes: ['verdict', 'cap'] }, { label: 'Result', nodes: ['done', 'escalate'] }],
   comparePresets: [
     { id: 'cap', label: 'Cap 2 vs cap 5', description: 'Same rejection-heavy reviewer, same seeded draws — only the cap changes.', a: { label: 'Max 2 rounds', config: { maxRounds: 2, approval: 25 } }, b: { label: 'Max 5 rounds', config: { maxRounds: 5, approval: 25 } }, seed: 4 },
     { id: 'repair', label: 'Repair turn vs none', description: 'Same malformed-verdict rate; B escalates on the first format error.', a: { label: 'One repair turn', config: { validity: 55, approval: 40 } }, b: { label: 'No repair turn', config: { validity: 55, approval: 40, repair: 'none' } }, seed: 2 },

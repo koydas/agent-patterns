@@ -36,3 +36,8 @@ function StatePanelImpl({ sim, vars }: { sim: PatternSim; vars: Record<string, V
   );
 }
 export const StatePanel = memo(StatePanelImpl);
+
+/** The PR label set as a chip row (hero). */
+export function StateChips({ vars }: { vars: Record<string, VarValue> }) {
+  return <Value v={vars.labels} empty="none yet" />;
+}

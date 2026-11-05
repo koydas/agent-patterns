@@ -31,8 +31,8 @@ export interface Geometry {
 }
 
 const SIZE = {
-  LR: { md: { w: 124, h: 46 }, sm: { w: 46, h: 34 }, rank: 160, lane: 74 },
-  TD: { md: { w: 114, h: 40 }, sm: { w: 40, h: 32 }, rank: 74, lane: 128 },
+  LR: { md: { w: 124, h: 46 }, sm: { w: 46, h: 34 }, tile: { w: 98, h: 84 }, icon: { w: 40, h: 40 }, rank: 160, lane: 74 },
+  TD: { md: { w: 114, h: 40 }, sm: { w: 40, h: 32 }, tile: { w: 98, h: 84 }, icon: { w: 40, h: 40 }, rank: 74, lane: 128 },
 } as const;
 const PAD = 22;
 

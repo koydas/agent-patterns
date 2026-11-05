@@ -5,8 +5,9 @@ import { composite } from '../patterns/composite';
 import { logs } from '../engine/trace';
 import { href } from '../router';
 import { Diagram } from './Diagram';
-import { StatePanel } from './StatePanel';
-import { useFrame, useOrientation, useWidth } from './hooks';
+import { StateChips } from './StatePanel';
+import { useFrame, useWidth } from './hooks';
+import { Icon } from './Icons';
 
 const SCENARIOS = composite.params[0].type === 'select' ? composite.params[0].options : [];
 const LINKS: Record<string, string> = { validator: 'validator-first', review: 'tool-grounded-review', fix: 'loop-with-guard', human: 'human-gate' };
@@ -19,9 +20,9 @@ export function HeroPipeline() {
   const traces = useMemo(() => [run.trace], [run.trace]);
   const pb = usePlayback(traces, 1);
   const { frame, ended } = useFrame(composite, run, pb.clock);
-  const graph = useMemo(() => composite.graph({}), []);
   const [ref, width] = useWidth<HTMLDivElement>();
-  const orientation = useOrientation(graph, width);
+  const compact = width > 0 && width < 600;
+  const graph = useMemo(() => composite.graph({ compact }), [compact]);
   const [auto, setAuto] = useState(true);
 
   // after a run ends, hold the outcome, then play the next scenario
@@ -38,15 +39,17 @@ export function HeroPipeline() {
   return (
     <div className="hero-visual card glow" ref={ref}>
       <div className="hero-visual-head">
-        <h2>autonomous-dev-loop — five patterns, one pipeline</h2>
-        {frame.outcome && <span className={`outcome tone-${frame.outcome.tone}`} role="status">{frame.outcome.label}</span>}
+        <h2><Icon name="play" size={12} /> Multi-agent pipeline example — autonomous-dev-loop</h2>
+        {frame.outcome
+          ? <span className={`outcome tone-${frame.outcome.tone}`} role="status">{frame.outcome.label}</span>
+          : <span className="running" role="status"><i /> Running…</span>}
       </div>
-      <Diagram graph={graph} frame={frame} orientation={orientation} label="autonomous-dev-loop pipeline: issue, validator-first, code generation, tool-grounded review, loop-with-guard auto-fix, human gate" />
+      <Diagram graph={graph} frame={frame} orientation="LR" mini={compact} label="autonomous-dev-loop pipeline: issue, validator-first, code generation, tool-grounded review, loop-with-guard auto-fix, human gate" />
       <p className="hero-caption" aria-live="polite">
         {current ? current.text : 'An issue enters the loop.'}
         {linked && <> — <a href={href.pattern(linked)}>{linked}</a></>}
       </p>
-      <StatePanel sim={composite} vars={frame.vars} />
+      <div className="hero-labels"><span>PR labels</span><StateChips vars={frame.vars} /></div>
       <div className="presets" role="group" aria-label="Pipeline scenario">
         {SCENARIOS.map((s, k) => (
           <button key={s.value} type="button" className={`chip ${k === i ? 'on' : ''}`} aria-pressed={k === i} onClick={() => { setAuto(false); setI(k); pb.play(); }}>{s.label}</button>

@@ -15,7 +15,11 @@ export interface GraphNode {
   rank: number;
   /** Position across the flow (row in LR, column in TD). Fractional values are allowed. */
   lane: number;
-  size?: 'sm' | 'md';
+  size?: 'sm' | 'md' | 'tile' | 'icon';
+  /** Icon name (components/Icons) shown on tile and icon nodes. */
+  icon?: string;
+  /** Resting border color, before any status. */
+  tone?: 'accent' | 'ok' | 'violet' | 'muted';
 }
 
 export interface GraphEdge {
@@ -139,6 +143,8 @@ export interface PatternSim {
   stochastic: boolean;
   /** Simulated ms per wall-clock ms at 1×. */
   timeScale?: number;
+  /** Named stages of the flow, shown as a stepper; a phase is current while one of its nodes is the last to start. */
+  phases?: { label: string; nodes: string[]; status?: NodeStatus[] }[];
   /** Run variables shown next to the diagram (label set, ledger, …), in this order. */
   state?: { key: string; label: string; empty?: string }[];
 }

@@ -69,27 +69,34 @@ export const composite: PatternSim = {
       { value: 'refine', label: 'Under-specified issue' },
     ] },
   ],
-  graph: () => ({
-    nodes: [
-      { id: 'issue', label: 'Issue', kind: 'start', rank: 0, lane: 0 },
-      { id: 'validator', label: 'validator-first', sub: 'low effort', kind: 'gate', rank: 1, lane: 0 },
-      { id: 'refine', label: 'needs-refinement', kind: 'fail', rank: 1, lane: 1 },
-      { id: 'gen', label: 'Code generation', sub: 'opens a PR', kind: 'agent', rank: 2, lane: 0 },
-      { id: 'review', label: 'tool-grounded', sub: 'review', kind: 'gate', rank: 3, lane: 0 },
-      { id: 'fix', label: 'loop-with-guard', sub: 'auto-fix ≤ 3', kind: 'agent', rank: 3, lane: 1 },
-      { id: 'human', label: 'human-gate', sub: 'a person merges', kind: 'human', rank: 4, lane: 0.5 },
-    ],
-    edges: [
-      { id: 'issue-validator', from: 'issue', to: 'validator' },
-      { id: 'validator-refine', from: 'validator', to: 'refine' },
-      { id: 'validator-gen', from: 'validator', to: 'gen' },
-      { id: 'gen-review', from: 'gen', to: 'review' },
-      { id: 'review-fix', from: 'review', to: 'fix', shift: -16 },
-      { id: 'fix-review', from: 'fix', to: 'review', shift: 16 },
-      { id: 'review-human', from: 'review', to: 'human' },
-      { id: 'fix-human', from: 'fix', to: 'human' },
-    ],
-  }),
+  // Tiles in one row (the mockup's hero); `compact` = icon-only for phones.
+  graph: (c) => {
+    const size = c.compact ? 'icon' as const : 'tile' as const;
+    const t = (id: string, label: string, icon: string, rank: number, tone: 'accent' | 'ok' | 'violet' | 'muted', kind: 'start' | 'gate' | 'agent' | 'human' | 'fail' = 'agent', lane = 0) =>
+      ({ id, label, icon, rank, lane, tone, kind, size });
+    return {
+      nodes: [
+        t('issue', 'Issue', 'file', 0, 'accent', 'start'),
+        t('validator', 'validator-\nfirst', 'shield', 1, 'ok', 'gate'),
+        t('gen', 'code\ngeneration', 'code', 2, 'muted'),
+        t('review', 'tool-\ngrounded-\nreview', 'search', 3, 'accent', 'gate'),
+        t('fix', 'loop-\nwith-guard', 'loop', 4, 'violet'),
+        t('human', 'human-\ngate', 'person', 5, 'ok', 'human'),
+        t('refine', 'needs-\nrefinement', 'close', 1, 'muted', 'fail', 1.35),
+      ],
+      edges: [
+        { id: 'issue-validator', from: 'issue', to: 'validator' },
+        { id: 'validator-refine', from: 'validator', to: 'refine' },
+        { id: 'validator-gen', from: 'validator', to: 'gen' },
+        { id: 'gen-review', from: 'gen', to: 'review' },
+        { id: 'review-fix', from: 'review', to: 'fix' },
+        { id: 'fix-review', from: 'fix', to: 'review', side: 'far', dashed: true, depth: c.compact ? -10 : 0 },
+        { id: 'review-human', from: 'review', to: 'human', side: 'near', dashed: true, depth: c.compact ? -10 : 0 },
+        { id: 'fix-human', from: 'fix', to: 'human' },
+      ],
+      rankGap: c.compact ? 52 : 112,
+    };
+  },
   simulate: (c) => simulate(c),
   metrics: [],
   derive: () => ({}),

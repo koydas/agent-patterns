@@ -1,19 +1,45 @@
-import type { ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { CATEGORY_LABEL, type Category } from '../content/types';
+import { catalog } from '../content';
 import { href } from '../router';
+import { Icon } from './Icons';
 
 export function BrandMark() {
+  return <span className="brand-mark"><Icon name="layers" size={22} /></span>;
+}
+
+const CATS: Category[] = ['flow', 'quality', 'reliability'];
+const catHref = (c: Category) => `${href.home()}?category=${c}#catalogue`;
+
+function CategoriesMenu() {
+  const ref = useRef<HTMLDetailsElement>(null);
+  useEffect(() => {
+    const close = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) ref.current.open = false; };
+    document.addEventListener('click', close);
+    return () => document.removeEventListener('click', close);
+  }, []);
   return (
-    <svg className="brand-mark" viewBox="0 0 32 32" aria-hidden="true">
-      <rect width="32" height="32" rx="8" fill="#0a1020" stroke="#1b2640" />
-      <path d="M11 16 21 10M11 16l10 6" stroke="#6d8dff" strokeWidth="1.6" fill="none" />
-      <circle cx="10" cy="16" r="3.6" fill="#2f63f0" />
-      <circle cx="22" cy="9.5" r="3.2" fill="#6d8dff" />
-      <circle cx="22" cy="22.5" r="3.2" fill="#34d399" />
-    </svg>
+    <details className="menu" ref={ref}>
+      <summary>Categories <Icon name="chevron" size={14} /></summary>
+      <ul>
+        {CATS.map((c) => (
+          <li key={c}><a href={catHref(c)} onClick={() => { if (ref.current) ref.current.open = false; }}>
+            <span className={`dot cat-${c}`} />{CATEGORY_LABEL[c]}<small>{catalog.filter((p) => p.category === c).length}</small>
+          </a></li>
+        ))}
+      </ul>
+    </details>
   );
 }
 
 export function Layout({ children, current }: { children: ReactNode; current: 'home' | 'pattern' | 'doc' | 'other' }) {
+  const [open, setOpen] = useState(false);
+  const links = (
+    <>
+      <a href={href.home()} aria-current={current === 'home' ? 'page' : undefined}>Home</a>
+      <a href={`${href.home()}#catalogue`} aria-current={current === 'pattern' ? 'page' : undefined}>Patterns ({catalog.length})</a>
+    </>
+  );
   return (
     <>
       <a className="skip" href="#main">Skip to content</a>
@@ -22,14 +48,30 @@ export function Layout({ children, current }: { children: ReactNode; current: 'h
           <a className="brand" href={href.home()} aria-label="agent-patterns home">
             <BrandMark />
             <span>agent-patterns</span>
-            <small>playground</small>
           </a>
           <nav className="nav" aria-label="Primary">
-            <a href={`${href.home()}#catalogue`} aria-current={current === 'home' ? 'page' : undefined}>Patterns</a>
-            <a className="hide-sm" href={`${href.home()}#in-production`}>In production</a>
-            <a href="https://github.com/koydas/agent-patterns" rel="noopener">GitHub</a>
+            {links}
+            <CategoriesMenu />
+            <a href={`${href.home()}#guide`}>Guide</a>
+            <a href={`${href.home()}#about`}>About</a>
           </nav>
+          <div className="header-actions">
+            <a className="btn small ghost" href="https://github.com/koydas/agent-patterns" rel="noopener"><Icon name="github" size={16} /> GitHub</a>
+            <a className="badge-pages" href="https://github.com/koydas/agent-patterns/actions/workflows/pages.yml" rel="noopener" title="Static site built by GitHub Actions">GitHub Pages <Icon name="external" size={13} /></a>
+          </div>
+          <button type="button" className="hamburger" aria-label={open ? 'Close menu' : 'Open menu'} aria-expanded={open} aria-controls="mobile-menu" onClick={() => setOpen((o) => !o)}>
+            <Icon name={open ? 'close' : 'menu'} size={22} />
+          </button>
         </div>
+        {open && (
+          <nav id="mobile-menu" className="mobile-menu" aria-label="Mobile" onClick={(e) => { if ((e.target as HTMLElement).closest('a')) setOpen(false); }}>
+            {links}
+            {CATS.map((c) => <a key={c} href={catHref(c)} className="sub"><span className={`dot cat-${c}`} />{CATEGORY_LABEL[c]}</a>)}
+            <a href={`${href.home()}#guide`}>Guide</a>
+            <a href={`${href.home()}#about`}>About</a>
+            <a href="https://github.com/koydas/agent-patterns" rel="noopener"><Icon name="github" size={16} /> GitHub</a>
+          </nav>
+        )}
       </header>
       <main id="main">{children}</main>
       <footer className="site-footer">

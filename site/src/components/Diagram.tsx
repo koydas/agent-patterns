@@ -2,6 +2,7 @@ import { memo, useMemo } from 'react';
 import { bezier, layout, type Geometry, type NodeBox, type Orientation } from '../engine/layout';
 import type { Frame } from '../engine/trace';
 import type { Graph, NodeStatus } from '../engine/types';
+import { iconPath } from './Icons';
 
 const STATUS_TEXT: Record<NodeStatus, string> = {
   idle: '', active: 'running', waiting: 'waiting', ok: 'done', fail: 'failed', blocked: 'blocked', skipped: 'skipped', warn: 'warning',
@@ -121,8 +122,23 @@ function DiagramImpl({ graph, frame, orientation, label, mini = false }: Diagram
           const sm = box.node.size === 'sm';
           const showSub = !compact && !!box.node.sub && !sm;
           const textX = box.node.kind === 'gate' || box.node.kind === 'human' ? (compact || sm ? box.w / 2 : box.w / 2 + 8) : box.w / 2;
+          if (box.node.size === 'tile' || box.node.size === 'icon') {
+            const tile = box.node.size === 'tile';
+            const lines = box.node.label.split('\n');
+            return (
+              <g key={box.node.id} className={`node tile k-${box.node.kind} s-${status} ${box.node.tone ? `tn-${box.node.tone}` : ''}`} transform={`translate(${box.x},${box.y})`}>
+                <title>{box.node.label.replace('\n', ' ')}{STATUS_TEXT[status] ? `: ${STATUS_TEXT[status]}` : ''}</title>
+                <rect className="node-body" width={box.w} height={box.h} rx={tile ? 14 : 10} />
+                <g className="tile-icon" transform={tile ? `translate(${box.w / 2 - 11},${lines.length > 2 ? 9 : 13}) scale(0.92)` : `translate(${box.w / 2 - 10},${box.h / 2 - 10}) scale(0.84)`}>
+                  <path d={iconPath(box.node.icon ?? 'file')} />
+                </g>
+                {tile && lines.map((l, i) => <text key={i} className="node-label tile-label" x={box.w / 2} y={(lines.length > 2 ? 46 : 50) + i * 13}>{l}</text>)}
+                {!mini && tile && <Glyph status={status} x={box.w - 2} y={2} />}
+              </g>
+            );
+          }
           return (
-            <g key={box.node.id} className={`node k-${box.node.kind} s-${status} ${sm ? 'sm' : ''}`} transform={`translate(${box.x},${box.y})`}>
+            <g key={box.node.id} className={`node k-${box.node.kind} s-${status} ${sm ? 'sm' : ''} ${box.node.tone ? `tn-${box.node.tone}` : ''}`} transform={`translate(${box.x},${box.y})`}>
               <title>{`${box.node.label}${box.node.sub ? ` — ${box.node.sub}` : ''}${STATUS_TEXT[status] ? `: ${STATUS_TEXT[status]}` : ''}${st?.badge ? ` (${st.badge})` : ''}`}</title>
               <NodeShape box={box} compact={compact} />
               <text className="node-label" x={textX} y={showSub ? box.h / 2 - 2 : box.h / 2 + 4}>{box.node.label}</text>

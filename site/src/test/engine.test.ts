@@ -114,3 +114,16 @@ describe('layout', () => {
     expect(bezier(e.pts, 1)).toEqual(e.pts[3]);
   });
 });
+
+describe('phases', () => {
+  it('follows the node that most recently started', async () => {
+    const { phaseAt, runSim: run, normalize: norm } = await import('../engine/trace');
+    const { SIMS } = await import('../patterns');
+    const sim = SIMS['loop-with-guard'];
+    const r = run(sim, norm(sim, { approval: 100 }), 1);
+    expect(phaseAt(sim.phases, r.trace, 0)).toBe(0);
+    expect(phaseAt(undefined, r.trace, 0)).toBe(-1);
+    expect(phaseAt(sim.phases, r.trace, 1)).toBe(0);
+    expect(phaseAt(sim.phases, r.trace, r.trace.duration)).toBe(sim.phases!.length - 1);
+  });
+});

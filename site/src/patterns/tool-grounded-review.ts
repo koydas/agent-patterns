@@ -214,6 +214,7 @@ export const toolGroundedReview: PatternSim = {
     { id: 'removed', label: 'Change deletes the test script', description: 'No silent opt-out: a removed script is unverified.', kind: 'failure', config: { test: 'REMOVED' } },
     { id: 'malformed', label: 'Prose verdict', description: '"LGTM — APPROVED" is not an approval.', kind: 'failure', config: { test: 'PASS', verdict: 'malformed' } },
   ],
+  phases: [{ label: 'Context', nodes: ['change', 'context'] }, { label: 'Checks', nodes: ['test', 'lint', 'typecheck', 'evidence'] }, { label: 'LLM review', nodes: ['reviewer'] }, { label: 'Gate in code', nodes: ['gate', 'changes', 'policy', 'verdict'] }, { label: 'Human', nodes: ['human'] }],
   comparePresets: [
     { id: 'llm-vs-gate', label: 'LLM-only vs evidence gate', description: 'The reviewer approves while the executed test fails.', caveat: 'Scenario A is an intentionally unsafe baseline, not the behavior of the documented implementation.', a: { label: 'LLM-only review (unsafe baseline)', config: { mode: 'llm' } }, b: { label: 'Deterministic evidence gate', config: {} } },
     { id: 'policy', label: 'Block vs surface UNVERIFIED', description: 'A test that timed out under the two documented policies.', a: { label: 'Block (impl)', config: { test: 'UNVERIFIED' } }, b: { label: 'Surface (autonomous-dev-loop)', config: { test: 'UNVERIFIED', policy: 'surface' } } },

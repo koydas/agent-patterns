@@ -179,6 +179,7 @@ export const checkpointResume: PatternSim = {
     { id: 'torn', label: 'Partial write', description: 'Crash while saving, non-atomic write.', kind: 'failure', config: { stages: 4, failAt: '3', crashWhen: 'after', atomic: false } },
     { id: 'stale', label: 'Stale checkpoint', description: 'The input changed; the checkpoint was not cleared.', kind: 'failure', config: { stale: true } },
   ],
+  phases: [{ label: 'Load', nodes: ['start', 'load'] }, { label: 'Run steps', nodes: NAMES.map((_, i) => `s${i}`) }, { label: 'Save', nodes: NAMES.map((_, i) => `cp${i}`) }, { label: 'Done', nodes: ['done'] }],
   comparePresets: [
     { id: 'resume', label: 'Restart vs resume', description: 'Five steps, the process dies during step 4.', a: { label: 'Restart from step 1', config: { stages: 5, failAt: '4', recovery: 'restart' } }, b: { label: 'Resume from checkpoint', config: { stages: 5, failAt: '4' } } },
     { id: 'atomic', label: 'Atomic vs direct write', description: 'Crash while saving step 3.', a: { label: 'Direct write', config: { stages: 4, failAt: '3', crashWhen: 'after', atomic: false } }, b: { label: 'tmp + rename (impl)', config: { stages: 4, failAt: '3', crashWhen: 'after' } } },

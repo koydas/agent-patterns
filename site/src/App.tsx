@@ -23,12 +23,20 @@ export function App() {
     if (route.name === 'not-found' || (route.name === 'pattern' && !known)) document.title = `Not found | agent-patterns`;
   }, [route.name, known]);
 
+  // deep links with a hash (#catalogue, #guide, a README section): scroll once the route has rendered
+  useEffect(() => {
+    const id = window.location.hash.slice(1);
+    if (!id) return;
+    const t = setTimeout(() => document.getElementById(id)?.scrollIntoView(), 60);
+    return () => clearTimeout(t);
+  }, [loc]);
+
   // canonical pattern URL keeps the Jekyll shape: /patterns/<slug>/
   useEffect(() => {
     if (route.name === 'pattern' && known && path !== href.pattern(route.slug)) window.history.replaceState(null, '', href.pattern(route.slug) + search);
   }, [route, known, path, search]);
 
-  if (route.name === 'home') return <Layout current="home"><Home /></Layout>;
+  if (route.name === 'home') return <Layout current="home"><Home search={search} /></Layout>;
   if (route.name === 'pattern' && known) return <Layout current="pattern"><Suspense fallback={<div className="wrap"><p className="loading">Loading the playground…</p></div>}><PatternPage key={route.slug} slug={route.slug} search={search} /></Suspense></Layout>;
   if (route.name === 'doc') {
     return (

@@ -146,6 +146,7 @@ export const resumableApprovalGate: PatternSim = {
     { id: 'conflict', label: 'Replay with another decision', description: 'Refused after commit.', kind: 'failure', config: { crash: true, retry: 'conflict' } },
     { id: 'mutable', label: 'Mutable report', description: 'Re-verified before publishing.', kind: 'failure', config: { mutated: true } },
   ],
+  phases: [{ label: 'Run + report', nodes: ['run', 'report'] }, { label: 'Pause', nodes: ['cp1', 'exit'] }, { label: 'Resume + gate', nodes: ['resume', 'gate'] }, { label: 'Effect once', nodes: ['effect', 'cp2', 'done'] }],
   comparePresets: [
     { id: 'keyed', label: 'Keyed vs unkeyed effect', description: 'Same crash between effect and checkpoint.', a: { label: 'Effect not keyed', config: { crash: true, keyed: false } }, b: { label: 'Keyed ledger (impl)', config: { crash: true } } },
   ],

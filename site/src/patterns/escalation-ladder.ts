@@ -135,6 +135,7 @@ export const escalationLadder: PatternSim = {
     { id: 'marker', label: 'Marker left', description: 'A conflict marker in the answer.', kind: 'failure', config: { bad: 100, badKind: 'marker' } },
     { id: 'breaker', label: 'Circuit open', description: 'Same conflict already escalated.', kind: 'failure', config: { previous: true } },
   ],
+  phases: [{ label: 'Breaker', nodes: ['item', 'breaker'] }, { label: 'Code rung', nodes: ['unit', 'det', 'next'] }, { label: 'Model rung', nodes: ['model', 'check'] }, { label: 'Outcome', nodes: ['apply', 'human'] }],
   comparePresets: [
     { id: 'structural', label: 'Mostly structural vs mostly judgement', description: 'Where the ladder pays off.', a: { label: '20 % solvable by code', config: { structural: 20, hunks: 8 } }, b: { label: '80 % solvable by code', config: { structural: 80, hunks: 8 } } },
   ],

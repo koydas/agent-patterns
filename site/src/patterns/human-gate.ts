@@ -93,6 +93,7 @@ export const humanGate: PatternSim = {
     { id: 'auto', label: 'Timeout auto-proceed', description: 'The anti-pattern.', kind: 'failure', config: { answer: 'none', autoProceed: true } },
     { id: 'refusal', label: 'Refusal', description: 'Ends at the gate the same way.', kind: 'failure', config: { refusal: true } },
   ],
+  phases: [{ label: 'Pipeline', nodes: ['task', 'pipeline', 'present'] }, { label: 'Wait for a human', nodes: ['gate'] }, { label: 'Outcome', nodes: ['action', 'done', 'halt'] }],
   comparePresets: [
     { id: 'timeout', label: 'Halt vs proceed on timeout', description: 'Nobody answers.', a: { label: 'Proceed on timeout (anti-pattern)', config: { answer: 'none', autoProceed: true } }, b: { label: 'Halt (impl)', config: { answer: 'none' } }, caveat: 'Scenario A is the failure mode, not the documented implementation.' },
   ],

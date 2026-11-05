@@ -160,6 +160,7 @@ export const fanOut: PatternSim = {
     { id: 'partial', label: 'Partial failure', description: 'A worker fails: Promise.all drops everything.', kind: 'failure', config: { tasks: 5, workers: 5, failure: 30 }, seed: 5 },
     { id: 'settled', label: 'Partial failure, allSettled', description: 'Survivors merged, result flagged partial.', kind: 'failure', config: { tasks: 5, workers: 5, failure: 30, aggregation: 'settled' }, seed: 5 },
   ],
+  phases: [{ label: 'Split', nodes: ['task'] }, { label: 'Parallel work', nodes: Array.from({ length: 10 }, (_, i) => `w${i}`) }, { label: 'Merge', nodes: ['agg'] }, { label: 'Result', nodes: ['done'] }],
   comparePresets: [
     { id: 'seq-par', label: 'Sequential vs parallel', description: 'Eight independent tasks of 1000 ms: one worker vs four.', a: { label: 'Sequential — 1 worker', config: { tasks: 8, workers: 1, latency: 1000, variance: 0 } }, b: { label: 'Parallel — 4 workers', config: { tasks: 8, workers: 4, latency: 1000, variance: 0 } } },
     { id: 'agg', label: 'Promise.all vs allSettled', description: 'Same failing worker, two aggregation strategies.', a: { label: 'Promise.all (impl)', config: { tasks: 5, workers: 5, failure: 30 } }, b: { label: 'allSettled + partial', config: { tasks: 5, workers: 5, failure: 30, aggregation: 'settled' } }, seed: 5 },
