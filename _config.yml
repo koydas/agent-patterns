@@ -26,4 +26,5 @@ defaults:
 
 exclude:
   - CLAUDE.md
+  - site
   - "**/*.test.mjs"
