@@ -86,3 +86,16 @@ describe('cross-links to the dashboards', () => {
     expect(dashboardsFor(['autonomous-dev-loop', 'ai-dev-tools']).map((d) => d.repo)).toEqual(['autonomous-dev-loop', 'ai-dev-tools']);
   });
 });
+
+describe('failure paths', () => {
+  it('rejects an unknown site id in the header and the footer, in the React wrapper and in render.mjs', () => {
+    expect(() => renderToStaticMarkup(<SiteHeader current="nope" />)).toThrow('site-kit: unknown site "nope"');
+    expect(() => renderToStaticMarkup(<SiteFooter current="nope" />)).toThrow('site-kit: unknown site "nope"');
+    const script = `import(${JSON.stringify(pathToFileURL(join(COPY, 'render.mjs')).href)}).then((k) => {
+      const out = [];
+      for (const f of [k.renderHeader, k.renderFooter]) { try { f('nope'); out.push('no error'); } catch (e) { out.push(e.message); } }
+      console.log(JSON.stringify(out));
+    });`;
+    expect(JSON.parse(execFileSync('node', ['-e', script], { encoding: 'utf8' }))).toEqual(['site-kit: unknown site "nope"', 'site-kit: unknown site "nope"']);
+  });
+});
