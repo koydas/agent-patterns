@@ -6,6 +6,8 @@ import { HeroPipeline } from '../components/HeroPipeline';
 import { Featured } from '../components/Featured';
 import { Icon } from '../components/Icons';
 import { StatusPill } from '../components/Pills';
+import { PageHead } from '../components/Layout';
+import { dashboardsFor } from '../dashboards';
 
 const REPO_INFO: Record<string, string> = {
   'autonomous-dev-loop': 'GitHub-native, headless: issue → validation → generation → PR → AI review → auto-fix → human merge.',
@@ -38,17 +40,14 @@ export function Home({ search = '' }: { search?: string }) {
 
   return (
     <>
+      <PageHead
+        eyebrow="Multi-agent patterns"
+        title={`${catalog.length} patterns for designing robust multi-agent systems`}
+        lede={<>Named after real problems in the <a href="https://github.com/koydas/autonomous-dev-loop" rel="noopener">autonomous-dev-loop</a> and <a href="https://github.com/koydas/ai-dev-tools" rel="noopener">ai-dev-tools</a> pipelines: interactive simulations, trade-offs, failure modes and runnable code.</>}
+      />
       <section className="hero">
         <div className="wrap hero-grid">
           <div className="hero-copy">
-            <span className="crumb-pill"><i /> Documentation · {catalog.length} patterns · Multi-agent</span>
-            <h1><em>{catalog.length} patterns</em> for designing robust multi-agent systems</h1>
-            <p className="lede">
-              This site indexes {catalog.length} patterns named after real problems in the{' '}
-              <a href="https://github.com/koydas/autonomous-dev-loop" rel="noopener">autonomous-dev-loop</a> and{' '}
-              <a href="https://github.com/koydas/ai-dev-tools" rel="noopener">ai-dev-tools</a> pipelines — with animated,
-              interactive simulations, trade-offs, failure modes and runnable implementations.
-            </p>
             <div className="hero-cta">
               <a className="btn primary lg" href="#catalogue"><Icon name="play" size={13} /> Explore the patterns <Icon name="arrow" size={16} /></a>
               <a className="btn lg" href="https://github.com/koydas/agent-patterns" rel="noopener"><Icon name="github" size={17} /> View on GitHub</a>
@@ -142,6 +141,7 @@ export function Home({ search = '' }: { search?: string }) {
                 <h3><a href={`https://github.com/koydas/${repo}`} rel="noopener">koydas/{repo}</a></h3>
                 <p>{REPO_INFO[repo] ?? ''}</p>
                 <ul>{slugs.map((s) => <li key={s}><a href={href.pattern(s)}>{s}</a></li>)}</ul>
+                {dashboardsFor([repo]).map((d) => <p key={d.url} className="repo-dash"><a href={d.url}>{d.label} dashboard →</a></p>)}
               </article>
             ))}
           </div>

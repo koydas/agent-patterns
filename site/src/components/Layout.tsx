@@ -1,12 +1,9 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useRef, type ReactNode } from 'react';
 import { CATEGORY_LABEL, type Category } from '../content/types';
 import { catalog } from '../content';
 import { href } from '../router';
+import { PageHead, SiteFooter, SiteHeader } from '../site-kit/react/SiteShell';
 import { Icon } from './Icons';
-
-export function BrandMark() {
-  return <span className="brand-mark"><Icon name="layers" size={22} /></span>;
-}
 
 const CATS: Category[] = ['flow', 'quality', 'reliability'];
 const catHref = (c: Category) => `${href.home()}?category=${c}#catalogue`;
@@ -32,57 +29,32 @@ function CategoriesMenu() {
   );
 }
 
+export { PageHead };
+
+/**
+ * The shared top bar and footer come from site-kit (brand, site switcher, GitHub, back to the portfolio). The row
+ * below is this site's own navigation: no script, it scrolls sideways on a phone.
+ */
 export function Layout({ children, current }: { children: ReactNode; current: 'home' | 'pattern' | 'doc' | 'other' }) {
-  const [open, setOpen] = useState(false);
-  const links = (
-    <>
-      <a href={href.home()} aria-current={current === 'home' ? 'page' : undefined}>Home</a>
-      <a href={`${href.home()}#catalogue`} aria-current={current === 'pattern' ? 'page' : undefined}>Patterns ({catalog.length})</a>
-    </>
-  );
   return (
     <>
       <a className="skip" href="#main">Skip to content</a>
-      <header className="site-header">
+      <SiteHeader current="agent-patterns" />
+      <header className="local-bar">
         <div className="wrap">
-          <a className="brand" href={href.home()} aria-label="agent-patterns home">
-            <BrandMark />
-            <span>agent-patterns</span>
-          </a>
-          <nav className="nav" aria-label="Primary">
-            {links}
+          <nav className="local-nav" aria-label="Primary">
+            <a href={href.home()} aria-current={current === 'home' ? 'page' : undefined}>Home</a>
+            <a href={`${href.home()}#catalogue`} aria-current={current === 'pattern' ? 'page' : undefined}>Patterns ({catalog.length})</a>
             <CategoriesMenu />
             <a href={`${href.home()}#guide`}>Guide</a>
             <a href={`${href.home()}#about`}>About</a>
           </nav>
-          <div className="header-actions">
-            <a className="btn small ghost" href="https://github.com/koydas/agent-patterns" rel="noopener"><Icon name="github" size={16} /> GitHub</a>
-            <a className="badge-pages" href="https://github.com/koydas/agent-patterns/actions/workflows/pages.yml" rel="noopener" title="Static site built by GitHub Actions">GitHub Pages <Icon name="external" size={13} /></a>
-          </div>
-          <button type="button" className="hamburger" aria-label={open ? 'Close menu' : 'Open menu'} aria-expanded={open} aria-controls="mobile-menu" onClick={() => setOpen((o) => !o)}>
-            <Icon name={open ? 'close' : 'menu'} size={22} />
-          </button>
         </div>
-        {open && (
-          <nav id="mobile-menu" className="mobile-menu" aria-label="Mobile" onClick={(e) => { if ((e.target as HTMLElement).closest('a')) setOpen(false); }}>
-            {links}
-            {CATS.map((c) => <a key={c} href={catHref(c)} className="sub"><span className={`dot cat-${c}`} />{CATEGORY_LABEL[c]}</a>)}
-            <a href={`${href.home()}#guide`}>Guide</a>
-            <a href={`${href.home()}#about`}>About</a>
-            <a href="https://github.com/koydas/agent-patterns" rel="noopener"><Icon name="github" size={16} /> GitHub</a>
-          </nav>
-        )}
       </header>
       <main id="main">{children}</main>
       <footer className="site-footer">
-        <div className="wrap">
-          <span>
-            <a href="https://github.com/koydas/agent-patterns" rel="noopener">koydas/agent-patterns</a> · MIT · patterns from{' '}
-            <a href="https://github.com/koydas/autonomous-dev-loop" rel="noopener">autonomous-dev-loop</a> and{' '}
-            <a href="https://github.com/koydas/ai-dev-tools" rel="noopener">ai-dev-tools</a>
-          </span>
-          <span>Every number in a playground is simulated in your browser — no API key, no model call.</span>
-        </div>
+        <SiteFooter current="agent-patterns" />
+        <div className="wrap sim-note">Every number in a playground is simulated in your browser — no API key, no model call.</div>
       </footer>
     </>
   );

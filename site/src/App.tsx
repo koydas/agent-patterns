@@ -1,6 +1,6 @@
 import { lazy, Suspense, useEffect } from 'react';
 import { catalog, claudeCodeDoc as claudeCode } from './content';
-import { Layout } from './components/Layout';
+import { Layout, PageHead } from './components/Layout';
 import { Home } from './pages/Home';
 import { href, parsePath, useLinkInterception, useLocation } from './router';
 
@@ -41,8 +41,8 @@ export function App() {
   if (route.name === 'doc') {
     return (
       <Layout current="doc">
+        <PageHead eyebrow="Docs" title={claudeCode.title} lede="How Claude Code is set up in koydas/agent-patterns: the ai-dev-tools plugin and repository skills." />
         <div className="wrap"><article className="doc" style={{ marginTop: 32 }}>
-          <h1>{claudeCode.title}</h1>
           <div dangerouslySetInnerHTML={{ __html: claudeCode.intro }} />
           {claudeCode.sections.map((s) => <section key={s.id}><h2 id={s.id}>{s.title}</h2><div dangerouslySetInnerHTML={{ __html: s.html }} /></section>)}
         </article></div>

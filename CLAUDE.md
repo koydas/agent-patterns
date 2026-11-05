@@ -7,6 +7,9 @@
 - A "Running in" claim names a real repo; otherwise mark the pattern "Reference only".
 - `site/` is the GitHub Pages playground (React + Vite + TS): content comes from the READMEs, the root README tables and `_data/patterns.yml` at build time; each pattern has a deterministic simulation in `site/src/patterns/<name>.ts`. Checks from `site/`: `npm run lint && npm test && npm run build`. Simulated values are never presented as measurements.
 
+- `site/src/site-kit/` is a vendored copy of the shared shell of koydas/koydas (`site-kit/`, ADR-0001): top bar with site switcher, footer, page header, tokens. Never edit it by hand: sync it (`node site-kit/scripts/kit.mjs sync --target site/src/site-kit --profile react` from a koydas/koydas checkout); `site/src/test/site-kit.test.tsx` fails when the copy drifts from the version and hash in its `KIT.json`.
+- A pattern page links the dashboards of the repos its "Running in" cell names, only for `production` patterns.
+
 Procedures in `.claude/skills/`: `new-pattern`.
 
 ## Toolbox — koydas/ai-dev-tools

@@ -7,6 +7,8 @@ import { href, navigate, replaceSearch } from '../router';
 import { Playground } from '../components/Playground';
 import { Compare } from '../components/Compare';
 import { StatusPill } from '../components/Pills';
+import { PageHead } from '../components/Layout';
+import { dashboardsFor } from '../dashboards';
 
 const SECTION_ORDER = ['how-it-works', 'when-to-use', 'when-not-to-use', 'trade-offs', 'trade-offs-and-failure-modes', 'failure-modes'];
 
@@ -23,6 +25,7 @@ function useReadme(slug: string): Readme | null {
 export function PatternPage({ slug, search }: { slug: string; search: string }) {
   const entry = catalog.find((p) => p.slug === slug)!;
   const sim = SIMS[slug];
+  const dashboards = dashboardsFor(entry.repos);
   const readme = useReadme(slug);
   // URL state is read once per pattern and mode; later changes only replace the query string
   const url = useMemo(() => readUrl(sim, search), [sim, search]);
@@ -49,12 +52,11 @@ export function PatternPage({ slug, search }: { slug: string; search: string }) 
   ] as Readme['sections'] : [];
 
   return (
+    <>
+    <PageHead eyebrow={`Pattern · ${CATEGORY_LABEL[entry.category]}`} title={slug} lede={<><strong>The problem: </strong><span dangerouslySetInnerHTML={{ __html: entry.problem }} /></>} />
     <div className="wrap wide">
-      <nav className="crumbs" aria-label="Breadcrumb"><a href={href.home()}>Patterns</a> / <span>{CATEGORY_LABEL[entry.category]}</span></nav>
       <header className="p-head">
         <div>
-          <h1>{slug}</h1>
-          <p className="problem"><strong>The problem: </strong><span dangerouslySetInnerHTML={{ __html: entry.problem }} /></p>
           <div className="p-meta">
             <span className={`pill cat-${entry.category}`}>{CATEGORY_LABEL[entry.category]}</span>
             <StatusPill status={entry.status} />
@@ -97,6 +99,9 @@ export function PatternPage({ slug, search }: { slug: string; search: string }) 
               <strong>{entry.status === 'production' ? 'Running in: ' : entry.status === 'prototype' ? 'Reference implementation, validated by a prototype: ' : 'Reference implementation: '}</strong>
               <span dangerouslySetInnerHTML={{ __html: entry.runningIn }} />
             </div>
+            {entry.status === 'production' && dashboards.length > 0 && (
+              <p className="dash-links">Live dashboards of {dashboards.length === 1 ? 'this repo' : 'these repos'}: {dashboards.map((d, i) => <span key={d.url}>{i > 0 && ' · '}<a href={d.url}>{d.label} →</a></span>)}</p>
+            )}
             <div className="impl-grid">
               <a className="impl-link" href={`${BLOB}/patterns/${slug}/README.md`} rel="noopener"><b>README.md</b><span>source of this page</span></a>
               <a className="impl-link" href={`${BLOB}/patterns/${slug}/impl.mjs`} rel="noopener"><b>impl.mjs</b><span>{entry.implLines} lines · {entry.offline ? 'runs offline' : 'calls the Claude API'}</span></a>
@@ -115,5 +120,6 @@ export function PatternPage({ slug, search }: { slug: string; search: string }) 
         </article>
       </div>
     </div>
+    </>
   );
 }
