@@ -54,8 +54,10 @@ export class Recorder {
     return this;
   }
 
+  /** The end is the last moment of the run: never before an event already recorded (a cursor moved back by `at`). */
   end(outcome: string, tone: Tone): SimEvent[] {
-    this.events.push({ t: this.now, type: 'end', outcome, tone });
+    const last = this.events.reduce((m, e) => Math.max(m, e.type === 'transit' ? e.t + e.dur : e.t), 0);
+    this.events.push({ t: Math.max(this.now, last), type: 'end', outcome, tone });
     return this.events;
   }
 }

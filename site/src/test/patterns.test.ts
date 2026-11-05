@@ -40,6 +40,8 @@ describe.each(ALL.map((s) => [s.slug, s] as const))('%s', (_slug, sim) => {
     const edges = new Set(g.edges.map((e) => e.id));
     const run = runSim(sim, c, seed);
     expect(run.trace.outcome).not.toBeNull();
+    const end = run.trace.events.find((e) => e.type === 'end')!;
+    expect(end.t, 'the end is the last moment of the run').toBe(run.trace.duration);
     for (const e of run.trace.events) {
       if (e.type === 'node') expect(nodes.has(e.node), `node ${e.node}`).toBe(true);
       if (e.type === 'transit') expect(edges.has(e.edge), `edge ${e.edge}`).toBe(true);

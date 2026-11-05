@@ -13,7 +13,13 @@ type Raw = { text: string; kind: 'json-valid' | 'json-refine' | 'bold-valid' | '
 function output(c: Config, seed: number, i: number, wellSpecified: boolean): Raw {
   const correct = chance(n(c, 'accuracy') / 100, seed, 'acc', i);
   const says = correct === wellSpecified ? 'VALID' : 'NEEDS_REFINEMENT';
-  if (!chance(n(c, 'malformed') / 100, seed, 'fmt', i)) return says === 'VALID' ? { text: '{"verdict":"VALID"}', kind: 'json-valid' } : { text: '{"verdict":"NEEDS_REFINEMENT"}', kind: 'json-refine' };
+  // a well-formed answer follows the contract of the parser in use: JSON for strict, a bare word for prefix
+  if (!chance(n(c, 'malformed') / 100, seed, 'fmt', i)) {
+    const prefix = c.parsing === 'prefix';
+    return says === 'VALID'
+      ? { text: prefix ? 'VALID' : '{"verdict":"VALID"}', kind: 'json-valid' }
+      : { text: prefix ? 'NEEDS_REFINEMENT' : '{"verdict":"NEEDS_REFINEMENT"}', kind: 'json-refine' };
+  }
   // the two malformed forms the README names: a bold verdict, and prose that starts with the word
   return rand(seed, 'form', i) < 0.5 ? { text: '**VALID**', kind: 'bold-valid' } : { text: 'VALID? No — needs refinement', kind: 'prose-valid-no' };
 }

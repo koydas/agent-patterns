@@ -201,3 +201,16 @@ describe('review fixes (PR #21)', () => {
     expect(Number(kept.metrics.busy)).toBeGreaterThan(Number(aborted.metrics.busy));
   });
 });
+
+describe('review fixes, round 2 (PR #21)', () => {
+  it('validator-first: a well-formed verdict passes the prefix parser too', () => {
+    const r = run('validator-first', { parsing: 'prefix', malformed: 0, accuracy: 100, vague: 0 });
+    expect(r.metrics.blockedGood).toBe(0);
+    expect(r.metrics.generated).toBe(8);
+  });
+  it('speculative-race: the end never precedes the result, even with equal latencies and no abort', () => {
+    const r = run('speculative-race', { selection: 'any', abort: false, failure: 0, checkPass: 100, lat0: 200, lat1: 200, lat2: 200 });
+    const end = r.trace.events.find((e) => e.type === 'end')!;
+    expect(end.t).toBeGreaterThanOrEqual(Number(r.trace.vars.resultAt));
+  });
+});
