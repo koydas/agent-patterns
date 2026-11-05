@@ -4,6 +4,8 @@
 
 Not a framework. Every pattern here was named after the problem it solved in a pipeline that runs: 16 of 21 have implementations in public repos, [`autonomous-dev-loop`](https://github.com/koydas/autonomous-dev-loop) (GitHub Actions, headless) and [`ai-dev-tools`](https://github.com/koydas/ai-dev-tools) (Claude Code, interactive), and every row names where. The remaining patterns are marked as reference implementations. 12 patterns also have a **Where it came from** section linking the incident or ADR that forced them — for example, `loop-with-guard` exists because an auto-fix agent replaced a 26-test suite with an 18-line stub.
 
+**[Interactive playground →](https://koydas.github.io/agent-patterns/)** — every pattern as a deterministic, seeded simulation you can play, step, break and compare side by side, in the browser (source: [`site/`](./site/)).
+
 Try one without an API key: `node --test patterns/tool-grounded-review/impl.test.mjs` (11 tests), or see [Run one](#run-one).
 
 How four of them compose in `autonomous-dev-loop`:
@@ -105,6 +107,7 @@ patterns/
 └── <pattern-name>/
     ├── README.md     pattern description, diagram, trade-offs, when not to use
     └── impl.mjs      minimal working implementation (~50-100 lines)
+site/                 the playground: React + Vite, one simulation per pattern (src/patterns/<name>.ts)
 ```
 
 The line budget is a target, not a cap. Where the guards *are* the pattern, the implementation keeps them rather than hiding them: `loop-with-guard` (~130 lines: strict verdict parsing, reviewer-side repair, three escalation paths), `speculative-race` (~110 lines: per-strategy deadlines and failure filtering) `tool-grounded-review` (~200 lines: both variants, a fail-closed gate with flaky and removed-script detection, isolated env and HOME, symlink-safe reads) and `staged-prompt-separation` (~200 lines, ~100 of them an inline system prompt sized past the provider's cacheable-prefix minimum so the second call shows a cache hit) run longer on purpose.

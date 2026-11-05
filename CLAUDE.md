@@ -5,6 +5,7 @@
 - Implementations stay minimal (~50–100 lines) unless the guards are the pattern.
 - Offline-runnable patterns need no API key; others target `claude-opus-5-5`.
 - A "Running in" claim names a real repo; otherwise mark the pattern "Reference only".
+- `site/` is the GitHub Pages playground (React + Vite + TS): content comes from the READMEs, the root README tables and `_data/patterns.yml` at build time; each pattern has a deterministic simulation in `site/src/patterns/<name>.ts`. Checks from `site/`: `npm run lint && npm test && npm run build`. Simulated values are never presented as measurements.
 
 Procedures in `.claude/skills/`: `new-pattern`.
 
